@@ -30,14 +30,14 @@ DOCS 		= 	$(SRCS:%.c=$(DOCSDIR)/%.html)
 
 top: shared docs 
 
-shared: $(LT_LIB_HOME)/$(WMS_SERIAL_LIBNAME).so
+shared: $(LT_LIB_HOME)/lib$(WMS_SERIAL_LIBNAME).so
 
-$(LT_LIB_HOME)/$(WMS_SERIAL_LIBNAME).so: $(OBJS)
+$(LT_LIB_HOME)/lib$(WMS_SERIAL_LIBNAME).so: $(OBJS)
 	cc $(CCSHAREDFLAG) $(CFLAGS) $(OBJS) -o $@ $(TIMELIB) 
 
-static: $(LT_LIB_HOME)/$(WMS_SERIAL_LIBNAME).a
+static: $(LT_LIB_HOME)/lib$(WMS_SERIAL_LIBNAME).a
 
-$(LT_LIB_HOME)/$(WMS_SERIAL_LIBNAME).a: $(OBJS)
+$(LT_LIB_HOME)/lib$(WMS_SERIAL_LIBNAME).a: $(OBJS)
 	ar rcv $@ $?
 
 $(BINDIR)/%.o: %.c
