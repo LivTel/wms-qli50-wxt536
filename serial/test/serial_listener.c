@@ -17,6 +17,10 @@
  * Default log level.
  */
 #define DEFAULT_LOG_LEVEL       (LOG_VERBOSITY_VERY_VERBOSE)
+/**
+ * The terminator used to delimit the end of each line read. <cr><lf> in this case.
+ */
+#define TERMINATOR_CRLF         ("\r\n")
 
 /* internal variables */
 /**
@@ -38,6 +42,7 @@ static void Help(void);
  * @param argv An array of argument strings.
  * @return This function returns 0 if the program succeeds, and a positive integer if it fails.
  * @see #DEFAULT_LOG_LEVEL
+ * @see #TERMINATOR_CRLF
  */
 int main(int argc, char *argv[])
 {
@@ -65,7 +70,7 @@ int main(int argc, char *argv[])
 	done = FALSE;
 	while(done == FALSE)
 	{
-		if(!Wms_Serial_Read("Serial Listener","serial_listener.c",serial_handle,message,255,&bytes_read))
+		if(!Wms_Serial_Read_Line("Serial Listener","serial_listener.c",serial_handle,TERMINATOR_CRLF,message,255,&bytes_read))
 		{
 			Wms_Serial_Error();
 			Wms_Serial_Close("Serial Listener","serial_listener.c",&serial_handle);

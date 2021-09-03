@@ -428,3 +428,67 @@ int Wms_Serial_Read(char *class,char *source,Wms_Serial_Handle_T handle,void *me
 	return TRUE;
 }
 
+/**
+ * Routine to read a message from the opened serial link. 
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param handle An instance of Wms_Serial_Handle_T containing connection information to read from.
+ * @param terminator A NULL terminated string containing the characters that are at the end of the current input line.
+ * @param message A buffer of message_length bytes, to fill with any serial data returned.
+ * @param message_length The length of the message buffer.
+ * @param bytes_read The address of an integer. On return this will be filled with the number of bytes read from
+ *        the serial interface. 
+ * @return TRUE if succeeded, FALSE otherwise.
+ */
+int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,char *terminator,char *message,int message_length,
+			  int *bytes_read)
+{
+	int read_errno,retval;
+
+	/* check input parameters */
+	if(message == NULL)
+	{
+		Wms_Serial_Error_Number = 16;
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line:Message was NULL.");
+		return FALSE;
+	}
+	if(message_length < 0)
+	{
+		Wms_Serial_Error_Number = 17;
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line:Message length was too small:%d.",
+			message_length);
+		return FALSE;
+	}
+	if(bytes_read == NULL)
+	{
+		Wms_Serial_Error_Number = 18;
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line:bytes_read was NULL.");
+		return FALSE;
+	}
+	/* initialise bytes_read */
+	(*bytes_read) = 0;
+	message[(*bytes_read)] = '\0';
+	while(strstr(message,terminator) == NULL)
+	{
+		retval = read(handle.Serial_Fd,message+strlen(message),message_length-strlen(message));
+		if(retval < 0)
+		{
+			read_errno = errno;
+			/* if the errno is EAGAIN, a non-blocking read has failed to return any data. */
+			if(read_errno != EAGAIN)
+			{
+				Wms_Serial_Error_Number = 19;
+				sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line: failed (%d,%d,%d).",
+					handle.Serial_Fd,retval,read_errno);
+				return FALSE;
+			}
+		}
+		else
+		{
+			(*bytes_read) += retval;
+		}
+	}/* end while */
+	message[(*bytes_read)] = '\0';
+	return TRUE;
+}
+

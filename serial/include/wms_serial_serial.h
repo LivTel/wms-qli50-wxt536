@@ -44,6 +44,8 @@ extern int Wms_Serial_Write(char *class,char *source,Wms_Serial_Handle_T handle,
 			    size_t message_length);
 extern int Wms_Serial_Read(char *class,char *source,Wms_Serial_Handle_T handle,void *message,
 			   int message_length,int *bytes_read);
+extern int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,
+				char *terminator,char *message,int message_length,int *bytes_read);
 
 
 #endif
