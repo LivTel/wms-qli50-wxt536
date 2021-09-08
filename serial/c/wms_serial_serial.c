@@ -161,7 +161,7 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 #if LOGGING > 0
 	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Serial_Serial_Open(%s).",handle->Device_Name);
 #endif /* LOGGING */
-	handle->Serial_Fd = open(handle->Device_Name, O_RDWR | O_NOCTTY | O_NDELAY);
+	handle->Serial_Fd = open(handle->Device_Name, O_RDWR | O_NOCTTY | O_NONBLOCK);
 	if(handle->Serial_Fd < 0)
 	{
 		open_errno = errno;
@@ -176,19 +176,11 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 #endif /* LOGGING */
 	/* make non-blocking */
 	/* diddly */
-	retval = fcntl(handle->Serial_Fd, F_SETFL, FNDELAY);
+	retval = fcntl(handle->Serial_Fd, F_SETFL, fcntl(handle->Serial_Fd, F_GETFL) & ~O_NONBLOCK);
 	if(retval != 0)
 	{
 		open_errno = errno;
 		Wms_Serial_Error_Number = 10;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: fcntl failed (%d).",open_errno);
-		return FALSE;
-	}	
-	retval = fcntl(handle->Serial_Fd, F_SETFL, FASYNC);
-	if(retval != 0)
-	{
-		open_errno = errno;
-		Wms_Serial_Error_Number = 14;
 		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: fcntl failed (%d).",open_errno);
 		return FALSE;
 	}	
@@ -204,21 +196,15 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	/* initialise new serial options */
 	bzero(&(handle->Serial_Options), sizeof(handle->Serial_Options));
 	/* set control flags and baud rate */
-	handle->Serial_Options.c_cflag |= Serial_Attribute_Data.Baud_Rate | Serial_Attribute_Data.Control_Flags;
-#ifdef CNEW_RTSCTS
-	handle->Serial_Options.c_cflag &= ~CNEW_RTSCTS;/* disable flow control */
-#endif
-#ifdef CRTSCTS
-	handle->Serial_Options.c_cflag &= ~CRTSCTS;/* disable flow control */
-#endif
+	handle->Serial_Options.c_cflag = Serial_Attribute_Data.Baud_Rate|Serial_Attribute_Data.Control_Flags;
 	/* select raw input, not line input. */
 	handle->Serial_Options.c_lflag = Serial_Attribute_Data.Local_Flags;
 	/* ignore parity errors */
-	handle->Serial_Options.c_iflag = Serial_Attribute_Data.Input_Flags;
+	handle->Serial_Options.c_iflag = IGNPAR | Serial_Attribute_Data.Input_Flags;
 	/* set raw output */
 	handle->Serial_Options.c_oflag = Serial_Attribute_Data.Output_Flags;
-	/* blocking read until 0 char arrives */
-	handle->Serial_Options.c_cc[VMIN]=0;
+	/* blocking read until 1 char arrives */
+	handle->Serial_Options.c_cc[VMIN]=1;
 	handle->Serial_Options.c_cc[VTIME]=0;
 #if LOGGING > 2
 	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
@@ -260,8 +246,6 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 		       handle->Serial_Options.c_lflag,handle->Serial_Options.c_cflag,
 		       handle->Serial_Options.c_cc[VMIN],handle->Serial_Options.c_cc[VTIME]);
 #endif /* LOGGING */
-	/* clean I & O device */
-	tcflush(handle->Serial_Fd,TCIOFLUSH);
 #if LOGGING > 0
 	Wms_Serial_Log(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Serial_Serial_Open:Finished.");
 #endif /* LOGGING */
