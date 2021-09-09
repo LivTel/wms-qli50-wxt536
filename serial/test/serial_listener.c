@@ -105,11 +105,13 @@ static void Remove_Crtl_Characters(char *message)
 	{
 		if(message[i] < 32)
 		{
-			message[i] = '\0';
+			fprintf(stderr,"Swapped character %d for space at position %d\n",(int)(message[i]),i);
+			message[i] = ' ';
 		}
 		if(message[i] > 127)
 		{
-			message[i] = '\0';
+			fprintf(stderr,"Swapped character %d for space at position %d\n",(int)(message[i]),i);
+			message[i] = ' ';
 		}
 	}
 }
