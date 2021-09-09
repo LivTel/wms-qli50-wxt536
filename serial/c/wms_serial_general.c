@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include "wms_serial_general.h"
+
 /* defines */
 /**
  * How long some buffers are when generating logging messages.
