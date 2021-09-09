@@ -14,7 +14,7 @@ LOGGINGCFLAGS = -DLOGGING=10
 CFLAGS = -g $(CCHECKFLAG) $(SHARED_LIB_CFLAGS) -I$(INCDIR) -L$(LT_LIB_HOME) $(LOGGINGCFLAGS) $(LOG_UDP_CFLAGS)
 
 DOCFLAGS = -static
-SRCS 		= 	serial_listener.c
+SRCS 		= 	serial_listener.c serial_send_command.c
 OBJS		=	$(SRCS:%.c=$(BINDIR)/%.o)
 EXES		=	$(SRCS:%.c=$(BINDIR)/%)
 DOCS 		= 	$(SRCS:%.c=$(DOCSDIR)/%.html)
