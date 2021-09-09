@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 	}
 	strcpy(message,Command_String);
 	strcat(message,TERMINATOR_CRLF);
-	if(!Wms_Serial_Serial_Write("Serial Send Command","serial_send_command.c",serial_handle,
+	if(!Wms_Serial_Write("Serial Send Command","serial_send_command.c",serial_handle,
 				    message,strlen(message)))
 	{
 		Wms_Serial_Error();

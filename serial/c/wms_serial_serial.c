@@ -307,7 +307,7 @@ int Wms_Serial_Close(char *class,char *source,Wms_Serial_Handle_T *handle)
  * @return TRUE if succeeded, FALSE otherwise.
  * @see #Wms_Serial_Handle_T
  */
-int Wms_Serial_Serial_Write(char *class,char *source,Wms_Serial_Handle_T handle,void *message,size_t message_length)
+int Wms_Serial_Write(char *class,char *source,Wms_Serial_Handle_T handle,void *message,size_t message_length)
 {
 	int write_errno,retval;
 
