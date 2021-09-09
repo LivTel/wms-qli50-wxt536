@@ -6,10 +6,6 @@
  * @author Chris Mottram
  * @version $Revision$
  */
-/**
- * Define BSD Source to get BSD prototypes, including cfmakeraw.
- */
-#define _BSD_SOURCE
 #include <errno.h>   /* Error number definitions */
 #include <stdio.h>
 #include <stdlib.h>
@@ -200,7 +196,7 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	/* select raw input, not line input. */
 	handle->Serial_Options.c_lflag = Serial_Attribute_Data.Local_Flags;
 	/* ignore parity errors */
-	handle->Serial_Options.c_iflag = IGNPAR | Serial_Attribute_Data.Input_Flags;
+	handle->Serial_Options.c_iflag = Serial_Attribute_Data.Input_Flags;
 	/* set raw output */
 	handle->Serial_Options.c_oflag = Serial_Attribute_Data.Output_Flags;
 	/* blocking read until 1 char arrives */
@@ -267,10 +263,6 @@ int Wms_Serial_Close(char *class,char *source,Wms_Serial_Handle_T *handle)
 #if LOGGING > 0
 	Wms_Serial_Log(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Serial_Close:Started.");
 #endif /* LOGGING */
-#if LOGGING > 1
-	Wms_Serial_Log(class,source,LOG_VERBOSITY_VERY_VERBOSE,"Wms_Serial_Close:Flushing serial line.");
-#endif /* LOGGING */
-	tcflush(handle->Serial_Fd, TCIFLUSH);
 #if LOGGING > 1
 	Wms_Serial_Log(class,source,LOG_VERBOSITY_VERY_VERBOSE,"Wms_Serial_Close:Resetting serial options.");
 #endif /* LOGGING */
