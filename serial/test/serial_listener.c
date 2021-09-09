@@ -33,6 +33,7 @@ static char rcsid[] = "$Id$";
 char Serial_Device_Name[256];
 
 /* internal routines */
+static void Remove_Crtl_Characters(char *message);
 static int Parse_Arguments(int argc, char *argv[]);
 static void Help(void);
 
@@ -43,6 +44,7 @@ static void Help(void);
  * @return This function returns 0 if the program succeeds, and a positive integer if it fails.
  * @see #DEFAULT_LOG_LEVEL
  * @see #TERMINATOR_CRLF
+ * @see #Remove_Crtl_Characters
  */
 int main(int argc, char *argv[])
 {
@@ -77,8 +79,9 @@ int main(int argc, char *argv[])
 			return 3;
 		}
 		message[bytes_read] = '\0';
+		Remove_Crtl_Characters(message);
 		if(bytes_read > 0)
-			fprintf(stdout,"%s",message);
+			fprintf(stdout,"%s\n",message);
 	}
 	/* close interface */
 	if(!Wms_Serial_Close("Serial Listener","serial_listener.c",&serial_handle))
@@ -88,6 +91,27 @@ int main(int argc, char *argv[])
 	}
 	fprintf(stdout,"Serial Listener:Finished.\n");
 	return 0;
+}
+
+/**
+ * Remove control characters from the string.
+ * @param message The string to modify.
+ */
+static void Remove_Crtl_Characters(char *message)
+{
+	int i;
+
+	for(i=0; i < strlen(message); i++)
+	{
+		if(message[i] < 32)
+		{
+			message[i] = '\0';
+		}
+		if(message[i] > 127)
+		{
+			message[i] = '\0';
+		}
+	}
 }
 
 /**
