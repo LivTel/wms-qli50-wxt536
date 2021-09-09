@@ -163,8 +163,8 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	{
 		open_errno = errno;
 		Wms_Serial_Error_Number = 2;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Serial_Open: Device %s failed to open (%d,%d).",
-			handle->Device_Name,handle->Serial_Fd,open_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Serial_Open: Device %s failed to open (%d,%d = %s).",
+			handle->Device_Name,handle->Serial_Fd,open_errno,strerror(open_errno));
 		return FALSE;
 	}
 #if LOGGING > 1
@@ -178,7 +178,8 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	{
 		open_errno = errno;
 		Wms_Serial_Error_Number = 10;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: fcntl failed (%d).",open_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: fcntl failed (%d = %s).",open_errno,
+			strerror(open_errno));
 		return FALSE;
 	}	
 	/* get current serial options */
@@ -187,7 +188,8 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	{
 		open_errno = errno;
 		Wms_Serial_Error_Number = 3;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: tcgetattr failed (%d).",open_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: tcgetattr failed (%d = %s).",open_errno,
+			strerror(open_errno));
 		return FALSE;
 	}
 	/* initialise new serial options */
@@ -220,7 +222,8 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	{
 		open_errno = errno;
 		Wms_Serial_Error_Number = 11;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: tcsetattr failed (%d).",open_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: tcsetattr failed (%d = %s).",open_errno,
+			strerror(open_errno));
 		return FALSE;
 	}
 	/* re-get current serial options to see what was set */
@@ -232,8 +235,8 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	{
 		open_errno = errno;
 		Wms_Serial_Error_Number = 12;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: re-get tcgetattr failed (%d).",
-			open_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: re-get tcgetattr failed (%d = %s).",
+			open_errno,strerror(open_errno));
 		return FALSE;
 	}
 #if LOGGING > 2
@@ -272,7 +275,8 @@ int Wms_Serial_Close(char *class,char *source,Wms_Serial_Handle_T *handle)
 	{
 		close_errno = errno;
 		Wms_Serial_Error_Number = 13;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Close: tcsetattr failed (%d).",close_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Close: tcsetattr failed (%d = %s).",close_errno,
+			strerror(close_errno));
 		return FALSE;
 	}
 #if LOGGING > 1
@@ -283,8 +287,8 @@ int Wms_Serial_Close(char *class,char *source,Wms_Serial_Handle_T *handle)
 	{
 		close_errno = errno;
 		Wms_Serial_Error_Number = 4;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Close: failed (%d,%d,%d).",
-			handle->Serial_Fd,retval,close_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Close: failed (%d,%d,%d = %s).",
+			handle->Serial_Fd,retval,close_errno,strerror(close_errno));
 		return FALSE;
 	}
 #if LOGGING > 0
@@ -325,8 +329,8 @@ int Wms_Serial_Serial_Write(char *class,char *source,Wms_Serial_Handle_T handle,
 	{
 		write_errno = errno;
 		Wms_Serial_Error_Number = 6;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Write: failed (%d,%d,%d).",
-			handle.Serial_Fd,retval,write_errno);
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Write: failed (%d,%d,%d = %s).",
+			handle.Serial_Fd,retval,write_errno,strerror(write_errno));
 		return FALSE;
 	}
 #if LOGGING > 0
@@ -383,8 +387,8 @@ int Wms_Serial_Read(char *class,char *source,Wms_Serial_Handle_T handle,void *me
 		if(read_errno != EAGAIN)
 		{
 			Wms_Serial_Error_Number = 9;
-			sprintf(Wms_Serial_Error_String,"Wms_Serial_Read: failed (%d,%d,%d).",
-				handle.Serial_Fd,retval,read_errno);
+			sprintf(Wms_Serial_Error_String,"Wms_Serial_Read: failed (%d,%d,%d = %s).",
+				handle.Serial_Fd,retval,read_errno,strerror(read_errno));
 			return FALSE;
 		}
 		else
@@ -455,8 +459,8 @@ int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,cha
 			if(read_errno != EAGAIN)
 			{
 				Wms_Serial_Error_Number = 19;
-				sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line: failed (%d,%d,%d).",
-					handle.Serial_Fd,retval,read_errno);
+				sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line: failed (%d,%d,%d = %s).",
+					handle.Serial_Fd,retval,read_errno,strerror(read_errno));
 				return FALSE;
 			}
 		}
