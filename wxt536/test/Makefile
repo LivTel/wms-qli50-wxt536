@@ -5,7 +5,7 @@ include			../Makefile.common
 
 INCDIR 		= $(WMS_WXT536_SRC_HOME)/include
 BINDIR		= $(WMS_WXT536_BIN_HOME)/test/$(HOSTTYPE)
-DOCSDIR 	= $(WMS_WXT536_DOC_HOME)/cdocs
+DOCSDIR 	= $(WMS_WXT536_DOC_HOME)/test
 
 SERIAL_INCDIR	= $(WMS_SERIAL_SRC_HOME)/include
 

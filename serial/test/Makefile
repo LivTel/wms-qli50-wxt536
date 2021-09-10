@@ -4,7 +4,7 @@ include			../Makefile.common
 
 INCDIR 		= $(WMS_SERIAL_SRC_HOME)/include
 BINDIR		= $(WMS_SERIAL_BIN_HOME)/test/$(HOSTTYPE)
-DOCSDIR 	= $(WMS_SERIAL_DOC_HOME)/cdocs
+DOCSDIR 	= $(WMS_SERIAL_DOC_HOME)/test
 
 # Do we want to enable logging?
 # no logging
