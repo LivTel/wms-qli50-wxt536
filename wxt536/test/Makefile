@@ -16,7 +16,7 @@ CFLAGS = -g $(CCHECKFLAG) $(SHARED_LIB_CFLAGS) -I$(INCDIR) -I$(SERIAL_INCDIR) \
 	 -L$(LT_LIB_HOME) $(LOGGINGCFLAGS) $(LOG_UDP_CFLAGS)
 
 DOCFLAGS = -static
-SRCS 		= 	wxt536_send_command.c
+SRCS 		= 	wxt536_send_command.c wxt536_command_device_address_get.c
 OBJS		=	$(SRCS:%.c=$(BINDIR)/%.o)
 EXES		=	$(SRCS:%.c=$(BINDIR)/%)
 DOCS 		= 	$(SRCS:%.c=$(DOCSDIR)/%.html)
