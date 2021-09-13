@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 {
 	Wms_Serial_Handle_T serial_handle;
 	char message[256];
-	int done,bytes_read;
+	int bytes_read;
 	
 	fprintf(stdout,"Serial Send Command\n");
 	/* initialise logging */
