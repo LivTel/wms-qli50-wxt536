@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 			Wms_Serial_Error();
 		return 4;
 	}
+	fprintf(stdout,"Wxt536 with Device Address %d is active.\n",Device_Address);
 	/* close interface */
 	if(!Wms_Wxt536_Connection_Close("Wxt536 Acknowledge Active","wxt536_command_acknowledge_active.c"))
 	{
