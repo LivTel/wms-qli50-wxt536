@@ -135,7 +135,7 @@ int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply
 int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,int *device_number)
 {
 	char reply_string[256];
-	int bytes_read,retval;
+	int retval;
 
 	Wms_Wxt536_Error_Number = 0;
 	if(device_number == NULL)
@@ -155,4 +155,43 @@ int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,int *device_n
 		return FALSE;		
 	}
 	return TRUE;
+}
+
+/**
+ * Command to check the  Wxt536 with the specified device_number is active on the connected serial port.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_number The device number of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Ack_Active(char *class,char *source,int device_number)
+{
+	char command_string[256];
+	char reply_string[256];
+	int retval,reply_device_number;
+
+	Wms_Wxt536_Error_Number = 0;
+	sprintf(command_string,"%d",device_number);
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	retval = sscanf(reply_string,"%d",&reply_device_number);
+	if(retval != 1)
+	{
+		Wms_Wxt536_Error_Number = 107;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Ack_Active:"
+			"Failed to parse device number from reply string '%s'.",reply_string);
+		return FALSE;		
+	}
+	if(device_number != reply_device_number)
+	{
+		Wms_Wxt536_Error_Number = 108;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Ack_Active:"
+			"Returned device number differed from command: %d vs %d  ('%s').",
+			device_number,reply_device_number,reply_string);
+		return FALSE;		
+	}
+	return TRUE;	
 }
