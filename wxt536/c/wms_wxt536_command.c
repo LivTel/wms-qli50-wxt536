@@ -22,6 +22,7 @@
 #include <string.h>
 #include "log_udp.h"
 #include "wms_serial_serial.h"
+#include "wms_wxt536_command.h"
 #include "wms_wxt536_connection.h"
 #include "wms_wxt536_general.h"
 
@@ -146,6 +147,8 @@ int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply
  * @param source The source parameter for logging.
  * @param device_number The address of an integer. If the procedure is successful, on return this will contain
  *        the device_number of the Wxt536 on the connected serial port.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wms_Wxt536_Command
  * @see wms_wxt536_general.html#Wms_Wxt536_Log
  * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
@@ -182,6 +185,8 @@ int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,int *device_n
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
  * @param device_number The device number of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wms_Wxt536_Command
  * @see wms_wxt536_general.html#Wms_Wxt536_Log
  * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
@@ -224,6 +229,8 @@ int Wms_Wxt536_Command_Ack_Active(char *class,char *source,int device_number)
  * @param source The source parameter for logging.
  * @param device_number The device number of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
  * @param comms_settings The address of a Wxt536_Command_Comms_Settings_Struct structure to fill in the parsed reply.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wms_Wxt536_Command
  * @see #Wxt536_Command_Comms_Settings_Struct
  * @see wms_wxt536_general.html#Wms_Wxt536_Log
@@ -231,7 +238,7 @@ int Wms_Wxt536_Command_Ack_Active(char *class,char *source,int device_number)
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
  */
-int Wms_Wxt536_Command_Current_Comms_Settings_Get(char *class,char *source,int device_number,
+int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_number,
 						  struct Wxt536_Command_Comms_Settings_Struct *comms_settings)
 {
 	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
@@ -241,8 +248,10 @@ int Wms_Wxt536_Command_Current_Comms_Settings_Get(char *class,char *source,int d
 	
 	Wms_Wxt536_Error_Number = 0;
 	sprintf(command_string,"%dXU",device_number);
+	/* send the command and get the reply string */
 	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
 		return FALSE;
+	/* parse the reply string into keyword/value pairs */
 	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
 		return FALSE;
 	/* iterate over parameter_value_list and extract values into comms_settings structure */
@@ -250,7 +259,27 @@ int Wms_Wxt536_Command_Current_Comms_Settings_Get(char *class,char *source,int d
 }
 
 /* internal functions */
-
+/**
+ * Internal routine to parse a reply into a series of keyword/value pairs. Many Wxt536 commands return replies of the
+ * form:
+ * "0XU,A=0,M=A,T=1,C=3,I=0,B=9600,D=8,P=N,S=1,L=25, N=WXT530,V=1.00<cr><lf>"
+ * i.e. the command, followed by a series of comma separated parameters, of the form "keyword=value".
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param reply_string The character string containing the reply to be parsed. The string contents are edited
+ *        as part of the parsing.
+ * @param parameter_value_list The address of a list pointer of Wxt536_Parameter_Value_Struct structs. On return
+ *        of the function this list will be allocated and filled with parsed parameter keyword/values.
+ * @param parameter_value_count The address of an integer, on a successful return this contains the number of elements
+ *        in parameter_value_list.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
 static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 				  struct Wxt536_Parameter_Value_Struct **parameter_value_list,
 				  int *parameter_value_count)
@@ -282,6 +311,7 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 #endif /* LOGGING */
 	(*parameter_value_count) = 0;
 	(*parameter_value_list) = NULL;
+	/* find the end of the command string */
 	comma_ptr = strstr(reply_string,",");
 	if(comma_ptr != NULL)
 	{
@@ -299,6 +329,8 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 		end_parameter_comma_ptr = strstr(comma_ptr+1,",");
 		if(end_parameter_comma_ptr != NULL)
 			end_parameter_comma_ptr = '\0';
+		/* the current parameter now starts at comma_ptr+1, ends at end_parameter_comma_ptr,
+		**  and is NULL terminated */
 #if LOGGING > 9
 		Wms_Wxt536_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
 				      "Wxt536_Parse_CSV_Reply: Parsing keyword value string '%s'.",comma_ptr+1);
@@ -320,6 +352,7 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 				(*parameter_value_count));
 			return FALSE;		
 		}
+		/* parse the keyword/value pair and put the results in the newly alloacted list position */
 		retval = sscanf(comma_ptr+1,"%32s=%128s",(*parameter_value_list)[(*parameter_value_count)].Keyword,
 				(*parameter_value_list)[(*parameter_value_count)].Value_String);
 		if(retval != 2)
