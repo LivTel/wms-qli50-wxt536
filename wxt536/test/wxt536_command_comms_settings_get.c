@@ -86,6 +86,17 @@ int main(int argc, char *argv[])
 		return 4;
 	}
 	fprintf(stdout,"Wxt536 has device address %c.\n",comms_settings.Address);
+	fprintf(stdout,"Wxt536 has protocol %c.\n",comms_settings.Protocol);
+	fprintf(stdout,"Wxt536 has serial interface %c.\n",comms_settings.Serial_Interface);
+	fprintf(stdout,"Wxt536 has composite repeat interval %d.\n",comms_settings.Composite_Repeat_Interval);
+	fprintf(stdout,"Wxt536 has baud rate %d.\n",comms_settings.Baud_Rate);
+	fprintf(stdout,"Wxt536 has data bits %d.\n",comms_settings.Data_Bits);
+	fprintf(stdout,"Wxt536 has parity %c.\n",comms_settings.Parity);
+	fprintf(stdout,"Wxt536 has stop bits %c.\n",comms_settings.Stop_Bits);
+	fprintf(stdout,"Wxt536 has RS485 line delay %d.\n",comms_settings.RS485_Line_Delay);
+	fprintf(stdout,"Wxt536 has name %s.\n",comms_settings.Device_Name);
+	fprintf(stdout,"Wxt536 has software version %s.\n",comms_settings.Software_Version);
+	fprintf(stdout,"Wxt536 has parameter locking %d.\n",comms_settings.Parameter_Locking);
 	/* close interface */
 	if(!Wms_Wxt536_Connection_Close("Wxt536 Comms Settings Get","wxt536_comms_settings_get.c"))
 	{

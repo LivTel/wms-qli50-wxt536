@@ -67,6 +67,9 @@ static char rcsid[] = "$Id$";
 static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 				  struct Wxt536_Parameter_Value_Struct **parameter_value_list,
 				  int *parameter_value_count);
+static int Wxt536_Parse_Parameter(char *class,char *source,char *keyword,char *format,
+				  struct Wxt536_Parameter_Value_Struct *parameter_value_list,
+				  int parameter_value_count,void *data_ptr);
 
 /* external functions */
 /**
@@ -244,6 +247,9 @@ int Wms_Wxt536_Command_Ack_Active(char *class,char *source,int device_number)
  *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wms_Wxt536_Command
  * @see #Wxt536_Command_Comms_Settings_Struct
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
  * @see wms_wxt536_general.html#Wms_Wxt536_Log
  * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
@@ -256,8 +262,14 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
 	char command_string[256];
 	char reply_string[256];
 	int parameter_value_count;
-	
+
 	Wms_Wxt536_Error_Number = 0;
+	if(comms_settings == NULL)
+	{
+		Wms_Wxt536_Error_Number = 118;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Comms_Settings_Get:comms_settings was NULL.");
+		return FALSE;		
+	}
 	sprintf(command_string,"%dXU",device_number);
 	/* send the command and get the reply string */
 	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
@@ -265,8 +277,45 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
 	/* parse the reply string into keyword/value pairs */
 	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
 		return FALSE;
-	/* iterate over parameter_value_list and extract values into comms_settings structure */
-	return TRUE;
+	/* Extract the relvant parameters from the parameter_value_list, parse them and store them in the
+	** return data structure */
+	if(!Wxt536_Parse_Parameter(class,source,"A","%c",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Address)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"M","%c",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Protocol)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"C","%c",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Serial_Interface)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"I","%d",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Composite_Repeat_Interval)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"B","%d",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Baud_Rate)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"D","%d",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Data_Bits)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"P","%c",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Parity)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"S","%d",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Stop_Bits)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"L","%d",parameter_value_list,parameter_value_count,
+				   &(comms_settings->RS485_Line_Delay)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"N","%256s",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Device_Name)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"V","%256s",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Software_Version)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"H","%d",parameter_value_list,parameter_value_count,
+				   &(comms_settings->Parameter_Locking)))
+		return FALSE;
+       	return TRUE;
 }
 
 /* internal functions */
@@ -411,5 +460,57 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 		(*parameter_value_count)++;
 		comma_ptr = end_parameter_comma_ptr;
 	}/* end while */
+	return TRUE;
+}
+
+/**
+ * This routine finds the specified keyword in the parameter_value_list, uses the format to parse
+ * the value, and stores the parsed value in the variable pointed to data address data_ptr.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param keyword The keyword of the parameter we want to parse.
+ * @param format The format of the paramaters value we want to parse, specified as a sscanf format string.
+ * @param parameter_value_list The list of keyword/value pairs parsed from a Wxt536 command.
+ * @param parameter_value_count The number of elements in parameter_value_list.
+ * @param data_ptr The address of a variable (hopefully of a type matching for format) to store the parsed 
+ *        parameter value in.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure). 
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parameter_Parsing_Struct
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+static int Wxt536_Parse_Parameter(char *class,char *source,char *keyword,char *format,
+				  struct Wxt536_Parameter_Value_Struct *parameter_value_list,
+				  int parameter_value_count,void *data_ptr)
+{
+	int parameter_value_list_index,retval;
+
+	/* find keyword/value pair in parameter_value_list with the specified keyword */
+	parameter_value_list_index = 0;
+	while((parameter_value_list_index < parameter_value_count)&&
+	      strcmp(parameter_value_list[parameter_value_list_index].Keyword,keyword))
+	{
+		parameter_value_list_index++;
+	}
+	if(parameter_value_list_index == parameter_value_count)
+	{
+		Wms_Wxt536_Error_Number = 116;
+		sprintf(Wms_Wxt536_Error_String,"Wxt536_Parse_Parameter:"
+			"Failed to find keyword string '%s' in parameter value list.",keyword);
+		return FALSE;
+	}
+	retval = sscanf(parameter_value_list[parameter_value_list_index].Value_String,format,data_ptr);
+	if(retval != 1)
+	{
+		Wms_Wxt536_Error_Number = 117;
+		sprintf(Wms_Wxt536_Error_String,"Wxt536_Parse_Parameter:"
+			"Failed to parse keyword '%s' value '%s' with format '%s' in parameter value list.",
+			keyword,parameter_value_list[parameter_value_list_index].Value_String,format);
+		return FALSE;
+	}
 	return TRUE;
 }
