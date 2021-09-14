@@ -364,6 +364,28 @@ int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,int 
 	/* parse the reply string into keyword/value pairs */
 	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
 		return FALSE;
+	/* there should be one reply parameter, M=protocol */
+	if(parameter_value_count != 1)
+	{
+		Wms_Wxt536_Error_Number = 120;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Comms_Settings_Protocol_Set:"
+			"Wrong number of reply parameters in reply (%d vd 1).",parameter_value_count);
+		return FALSE;		
+	}
+	if(strcmp(parameter_value_list[0].Keyword,"M") != 0)
+	{
+		Wms_Wxt536_Error_Number = 121;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Comms_Settings_Protocol_Set:"
+			"Wrong reply parameter keyword ('%s' vd 'M').",parameter_value_list[0].Keyword);
+		return FALSE;		
+	}
+	if(parameter_value_list[0].Value_String[0] != protocol)
+	{
+		Wms_Wxt536_Error_Number = 122;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Comms_Settings_Protocol_Set:"
+			"Wrong reply parameter value ('%c' vd '%c').",parameter_value_list[0].Value_String[0],protocol);
+		return FALSE;		
+	}
 	return TRUE;
 }
 
