@@ -467,6 +467,7 @@ int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,cha
 		else
 		{
 			(*bytes_read) += retval;
+			message[(*bytes_read)] = '\0';
 		}
 	}/* end while */
 	message[(*bytes_read)] = '\0';
