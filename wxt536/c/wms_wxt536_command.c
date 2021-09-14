@@ -286,6 +286,7 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wxt536_Parameter_Value_Struct
+ * @see #TERMINATOR_CRLF
  * @see #KEYWORD_LENGTH
  * @see #VALUE_LENGTH
  * @see wms_wxt536_general.html#Wms_Wxt536_Log
@@ -300,6 +301,7 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 	char *comma_ptr = NULL;
 	char *end_parameter_comma_ptr = NULL;
 	char *equals_ptr = NULL;
+	char *crlf_ptr = NULL;
 	
 	if(reply_string == NULL)
 	{
@@ -335,6 +337,10 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 				      "Wxt536_Parse_CSV_Reply: Parsed command string '%s'.",reply_string);
 #endif /* LOGGING */		
 	}
+	/* remove the terminator at the end */
+	crlf_ptr = strstr(reply_string,TERMINATOR_CRLF);
+	if(crlf_ptr != NULL)
+		(*crlf_ptr) = '\0';
 	/* while there are more parameters */
 	while(comma_ptr != NULL)
 	{
