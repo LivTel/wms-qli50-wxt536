@@ -43,7 +43,26 @@ static void Help(void);
  * @param argv An array of argument strings.
  * @return This function returns 0 if the program succeeds, and a positive integer if it fails.
  * @see #DEFAULT_LOG_LEVEL
+ * @see #Serial_Device_Name
  * @see #Device_Address
+ * @see #Parse_Arguments
+ * @see ../cdocs/wms_wxt536_general.html#Wms_Wxt536_Set_Log_Handler_Function
+ * @see ../cdocs/wms_wxt536_general.html#Wms_Wxt536_Log_Handler_Stdout
+ * @see ../cdocs/wms_wxt536_general.html#Wms_Wxt536_Set_Log_Filter_Function
+ * @see ../cdocs/wms_wxt536_general.html#Wms_Wxt536_Log_Filter_Level_Absolute
+ * @see ../cdocs/wms_wxt536_general.html#Wms_Wxt536_Set_Log_Filter_Level
+ * @see ../cdocs/wms_wxt536_general.html#Wms_Wxt536_Error
+ * @see ../cdocs/wms_wxt536_connection.html#Wms_Wxt536_Connection_Open
+ * @see ../cdocs/wms_wxt536_connection.html#Wms_Wxt536_Connection_Close
+ * @see ../cdocs/wms_wxt536_command.html#Wxt536_Command_Comms_Settings_Struct
+ * @see ../cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Comms_Settings_Get
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Set_Log_Handler_Function
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Log_Handler_Stdout
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Set_Log_Filter_Function
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Log_Filter_Level_Absolute
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Set_Log_Filter_Level
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Get_Error_Number
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Error
  */
 int main(int argc, char *argv[])
 {
@@ -115,6 +134,9 @@ int main(int argc, char *argv[])
  * @param argv An array of argument strings.
  * @see #Help
  * @see #Device_Address
+ * @see #Serial_Device_Name
+ * @see ../cdocs/wms_wxt536_general.html#Wms_Wxt536_Set_Log_Filter_Level
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Set_Log_Filter_Level
  */
 static int Parse_Arguments(int argc, char *argv[])
 {
@@ -200,7 +222,7 @@ static int Parse_Arguments(int argc, char *argv[])
 static void Help(void)
 {
 	fprintf(stdout,"Wxt536 Comms Settings Get:Help.\n");
-	fprintf(stdout,"Wxt536 Comms Settings Get queries the Vaisala Wxt536 and gets it's device address.\n");
+	fprintf(stdout,"Wxt536 Comms Settings Get queries the Vaisala Wxt536 and gets it's communication settings.\n");
 	fprintf(stdout,"wxt536_command_comms_settings_get [-serial_device|-se <filename>][-d[evice_address] <number>]\n");
 	fprintf(stdout,"\t[-l[og_level] <number>][-h[elp]]\n");
 	fprintf(stdout,"\n");

@@ -3,9 +3,25 @@
 #ifndef WMS_WXT536_COMMAND_H
 #define WMS_WXT536_COMMAND_H
 
+/**
+ * Protocol value to use to set the Wxt536 communication protocol. 'A' means ASCII automatic.
+ * @see #Wms_Wxt536_Command_Comms_Settings_Protocol_Set
+ */
 #define WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC       ('A')
+/**
+ * Protocol value to use to set the Wxt536 communication protocol. 'a' means ASCII automatic with CRC.
+ * @see #Wms_Wxt536_Command_Comms_Settings_Protocol_Set
+ */
 #define WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC_CRC   ('a')
+/**
+ * Protocol value to use to set the Wxt536 communication protocol. 'P' means ASCII polled.
+ * @see #Wms_Wxt536_Command_Comms_Settings_Protocol_Set
+ */
 #define WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED          ('P')
+/**
+ * Protocol value to use to set the Wxt536 communication protocol. 'p' means ASCII polled with CRC.
+ * @see #Wms_Wxt536_Command_Comms_Settings_Protocol_Set
+ */
 #define WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED_CRC      ('p')
 
 /**

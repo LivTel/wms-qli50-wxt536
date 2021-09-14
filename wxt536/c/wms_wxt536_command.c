@@ -318,7 +318,58 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
        	return TRUE;
 }
 
-/* internal functions */
+/**
+ * Routine to set the Wxt536 communication protocol.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_number The device number of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param protocol A character describing the protocol to set the Wxt536 to use. One of: 
+ *        WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC, WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC_CRC, 
+ *        WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED, WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED_CRC.
+ * @see #WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC
+ * @see #WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC_CRC
+ * @see #WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED
+ * @see #WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED_CRC
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,int device_number,char protocol)
+{
+	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
+	char command_string[256];
+	char reply_string[256];
+	int parameter_value_count;
+
+	Wms_Wxt536_Error_Number = 0;
+	if((protocol != WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC)&&
+	   (protocol != WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC_CRC)&&
+	   (protocol != WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED)&&
+	   (protocol != WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED_CRC))
+	{
+		Wms_Wxt536_Error_Number = 119;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Comms_Settings_Protocol_Set:Illegal protocol '%c'.",
+			protocol);
+		return FALSE;		
+	}
+	sprintf(command_string,"%dXU,M=%c",device_number,protocol);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	/* parse the reply string into keyword/value pairs */
+	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
+		return FALSE;
+	return TRUE;
+}
+
+/* ----------------------------------------------------------------------
+** internal functions
+** ---------------------------------------------------------------------- */
 /**
  * Internal routine to parse a reply into a series of keyword/value pairs. Many Wxt536 commands return replies of the
  * form:
