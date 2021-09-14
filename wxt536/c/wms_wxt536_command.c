@@ -328,7 +328,7 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 		/* find the end of this parameter and null terminate it (if it is NOT the last parameter) */
 		end_parameter_comma_ptr = strstr(comma_ptr+1,",");
 		if(end_parameter_comma_ptr != NULL)
-			end_parameter_comma_ptr = '\0';
+			(*end_parameter_comma_ptr) = '\0';
 		/* the current parameter now starts at comma_ptr+1, ends at end_parameter_comma_ptr,
 		**  and is NULL terminated */
 #if LOGGING > 9
