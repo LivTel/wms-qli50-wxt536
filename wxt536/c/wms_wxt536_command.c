@@ -31,19 +31,30 @@
  * The terminator used to delimit the end of each line read. <cr><lf> in this case.
  */
 #define TERMINATOR_CRLF         ("\r\n")
-
+/**
+ * Length of the Keyword String in Wxt536_Parameter_Value_Struct.
+ * @see #Wxt536_Parameter_Value_Struct
+ */
+#define KEYWORD_LENGTH          (32)
+/**
+ * Length of the Value String in Wxt536_Parameter_Value_Struct.
+ * @see #Wxt536_Parameter_Value_Struct
+ */
+#define VALUE_LENGTH            (128)
 /* internal structures */
 /**
  * Structure to hold one keyword/value pair in the list of parameter values returned by a command.
  * <dl>
- * <dt>Keyword</dt> <dd>The keyword we are holding the value for.</dd>
- * <dt>Value_String</dt> <dd>The value of the keyword.</dd>
+ * <dt>Keyword</dt> <dd>The keyword we are holding the value for, of length KEYWORD_LENGTH.</dd>
+ * <dt>Value_String</dt> <dd>The value of the keyword, of length VALUE_LENGTH.</dd>
  * </dl>
+ * @see #KEYWORD_LENGTH
+ * @see #VALUE_LENGTH
  */
 struct Wxt536_Parameter_Value_Struct
 {
-	char Keyword[32];
-	char Value_String[128];
+	char Keyword[KEYWORD_LENGTH];
+	char Value_String[VALUE_LENGTH];
 };
 
 /* internal variables */
@@ -275,6 +286,8 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wxt536_Parameter_Value_Struct
+ * @see #KEYWORD_LENGTH
+ * @see #VALUE_LENGTH
  * @see wms_wxt536_general.html#Wms_Wxt536_Log
  * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
@@ -286,7 +299,7 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 {
 	char *comma_ptr = NULL;
 	char *end_parameter_comma_ptr = NULL;
-	int retval;
+	char *equals_ptr = NULL;
 	
 	if(reply_string == NULL)
 	{
@@ -352,18 +365,37 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 				(*parameter_value_count));
 			return FALSE;		
 		}
-		/* parse the keyword/value pair and put the results in the newly alloacted list position */
-		retval = sscanf(comma_ptr+1,"%32s=%128s",(*parameter_value_list)[(*parameter_value_count)].Keyword,
-				(*parameter_value_list)[(*parameter_value_count)].Value_String);
-		if(retval != 2)
+		/* parse the keyword=value pair and put the results in the newly alloacted list position */
+		equals_ptr = strstr(comma_ptr+1,"=");
+		if(equals_ptr == NULL)
 		{
 			Wms_Wxt536_Error_Number = 113;
-			sprintf(Wms_Wxt536_Error_String,
-				"Wxt536_Parse_CSV_Reply:Failed to parse keyword/value string '%s' at parameter %d.",
+			sprintf(Wms_Wxt536_Error_String,"Wxt536_Parse_CSV_Reply:"
+				"Failed to parse keyword/value string '%s' at parameter %d: No equals sign found.",
 				comma_ptr+1,(*parameter_value_count));
-			return FALSE;		
-			
+			return FALSE;
 		}
+		(*equals_ptr) = '\0';
+		/* keyword now null terminated at comma_ptr+1 */
+		if(strlen(comma_ptr+1) > KEYWORD_LENGTH)
+		{
+			Wms_Wxt536_Error_Number = 114;
+			sprintf(Wms_Wxt536_Error_String,"Wxt536_Parse_CSV_Reply:"
+			  "Failed to parse keyword string '%s' at parameter %d:Keyword was too long (%lu vs %d).",
+				comma_ptr+1,(*parameter_value_count),strlen(comma_ptr+1),KEYWORD_LENGTH);
+			return FALSE;
+		}
+		strcpy((*parameter_value_list)[(*parameter_value_count)].Keyword,comma_ptr+1);
+		/* value now null terminated at equals_ptr+1 */
+		if(strlen(equals_ptr+1) > VALUE_LENGTH)
+		{
+			Wms_Wxt536_Error_Number = 115;
+			sprintf(Wms_Wxt536_Error_String,"Wxt536_Parse_CSV_Reply:"
+			  "Failed to parse value string '%s' at parameter %d:Value was too long (%lu vs %d).",
+				equals_ptr+1,(*parameter_value_count),strlen(equals_ptr+1),VALUE_LENGTH);
+			return FALSE;
+		}
+		strcpy((*parameter_value_list)[(*parameter_value_count)].Value_String,equals_ptr+1);
 #if LOGGING > 9
 		Wms_Wxt536_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
 				      "Wxt536_Parse_CSV_Reply: Parsed keyword '%s with value '%s'.",
