@@ -390,8 +390,29 @@ int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,char
 	return TRUE;
 }
 
+/**
+ * Routine to reset the Wxt536.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536(can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
 int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address)
 {
+	char command_string[256];
+	char reply_string[256];
+
+	sprintf(command_string,"%cXZ",device_address);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
 	return TRUE;
 }
 
