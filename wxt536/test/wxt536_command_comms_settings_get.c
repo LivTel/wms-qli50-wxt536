@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 	fprintf(stdout,"Wxt536 has baud rate %d.\n",comms_settings.Baud_Rate);
 	fprintf(stdout,"Wxt536 has data bits %d.\n",comms_settings.Data_Bits);
 	fprintf(stdout,"Wxt536 has parity %c.\n",comms_settings.Parity);
-	fprintf(stdout,"Wxt536 has stop bits %c.\n",comms_settings.Stop_Bits);
+	fprintf(stdout,"Wxt536 has stop bits %d.\n",comms_settings.Stop_Bits);
 	fprintf(stdout,"Wxt536 has RS485 line delay %d.\n",comms_settings.RS485_Line_Delay);
 	fprintf(stdout,"Wxt536 has name %s.\n",comms_settings.Device_Name);
 	fprintf(stdout,"Wxt536 has software version %s.\n",comms_settings.Software_Version);
