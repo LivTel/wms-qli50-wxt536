@@ -326,6 +326,10 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 #endif /* LOGGING */
 	(*parameter_value_count) = 0;
 	(*parameter_value_list) = NULL;
+	/* remove the terminator at the end */
+	crlf_ptr = strstr(reply_string,TERMINATOR_CRLF);
+	if(crlf_ptr != NULL)
+		(*crlf_ptr) = '\0';
 	/* find the end of the command string */
 	comma_ptr = strstr(reply_string,",");
 	if(comma_ptr != NULL)
@@ -337,10 +341,6 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 				      "Wxt536_Parse_CSV_Reply: Parsed command string '%s'.",reply_string);
 #endif /* LOGGING */		
 	}
-	/* remove the terminator at the end */
-	crlf_ptr = strstr(reply_string,TERMINATOR_CRLF);
-	if(crlf_ptr != NULL)
-		(*crlf_ptr) = '\0';
 	/* while there are more parameters */
 	while(comma_ptr != NULL)
 	{
