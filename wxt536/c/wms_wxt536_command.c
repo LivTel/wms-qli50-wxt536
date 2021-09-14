@@ -159,8 +159,8 @@ int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply
  * Command to retrieve the Device Address of a Wxt536 on the connected serial port.
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
- * @param device_number The address of an integer. If the procedure is successful, on return this will contain
- *        the device_number of the Wxt536 on the connected serial port.
+ * @param device_address The address of a character. If the procedure is successful, on return this will contain
+ *        the device_address character of the Wxt536 on the connected serial port.
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wms_Wxt536_Command
@@ -169,36 +169,36 @@ int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
  */
-int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,int *device_number)
+int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,char *device_address)
 {
 	char reply_string[256];
 	int retval;
 
 	Wms_Wxt536_Error_Number = 0;
-	if(device_number == NULL)
+	if(device_address == NULL)
 	{
 		Wms_Wxt536_Error_Number = 105;
-		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Device_Address_Get:device_number was NULL.");
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Device_Address_Get:device_address was NULL.");
 		return FALSE;
 	}
 	if(!Wms_Wxt536_Command(class,source,"?",reply_string,255))
 		return FALSE;
-	retval = sscanf(reply_string,"%d",device_number);
+	retval = sscanf(reply_string,"%c",device_address);
 	if(retval != 1)
 	{
 		Wms_Wxt536_Error_Number = 106;
 		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Device_Address_Get:"
-			"Failed to parse device number from reply string '%s'.",reply_string);
+			"Failed to parse device address from reply string '%s'.",reply_string);
 		return FALSE;		
 	}
 	return TRUE;
 }
 
 /**
- * Command to check the  Wxt536 with the specified device_number is active on the connected serial port.
+ * Command to check the  Wxt536 with the specified device_address is active on the connected serial port.
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
- * @param device_number The device number of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param device_address The device address of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wms_Wxt536_Command
@@ -207,41 +207,42 @@ int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,int *device_n
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
  */
-int Wms_Wxt536_Command_Ack_Active(char *class,char *source,int device_number)
+int Wms_Wxt536_Command_Ack_Active(char *class,char *source,char device_address)
 {
 	char command_string[256];
 	char reply_string[256];
-	int retval,reply_device_number;
+	char reply_device_address;
+	int retval;
 
 	Wms_Wxt536_Error_Number = 0;
-	sprintf(command_string,"%d",device_number);
+	sprintf(command_string,"%c",device_address);
 	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
 		return FALSE;
-	retval = sscanf(reply_string,"%d",&reply_device_number);
+	retval = sscanf(reply_string,"%c",&reply_device_address);
 	if(retval != 1)
 	{
 		Wms_Wxt536_Error_Number = 107;
 		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Ack_Active:"
-			"Failed to parse device number from reply string '%s'.",reply_string);
+			"Failed to parse device address from reply string '%s'.",reply_string);
 		return FALSE;		
 	}
-	if(device_number != reply_device_number)
+	if(device_address != reply_device_address)
 	{
 		Wms_Wxt536_Error_Number = 108;
 		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Ack_Active:"
-			"Returned device number differed from command: %d vs %d  ('%s').",
-			device_number,reply_device_number,reply_string);
+			"Returned device address differed from command: '%c' vs '%c'  ('%s').",
+			device_address,reply_device_address,reply_string);
 		return FALSE;		
 	}
 	return TRUE;	
 }
 
 /**
- * Send the Wxt536 with the specified device_number a command to retrieve it's current communication settings, 
+ * Send the Wxt536 with the specified device_address a command to retrieve it's current communication settings, 
  * and parse it's reply.
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
- * @param device_number The device number of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param device_address The device address of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
  * @param comms_settings The address of a Wxt536_Command_Comms_Settings_Struct structure to fill in the parsed reply.
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
@@ -255,8 +256,8 @@ int Wms_Wxt536_Command_Ack_Active(char *class,char *source,int device_number)
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
  */
-int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_number,
-						  struct Wxt536_Command_Comms_Settings_Struct *comms_settings)
+int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,char device_address,
+					  struct Wxt536_Command_Comms_Settings_Struct *comms_settings)
 {
 	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
 	char command_string[256];
@@ -270,7 +271,7 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
 		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Comms_Settings_Get:comms_settings was NULL.");
 		return FALSE;		
 	}
-	sprintf(command_string,"%dXU",device_number);
+	sprintf(command_string,"%cXU",device_address);
 	/* send the command and get the reply string */
 	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
 		return FALSE;
@@ -322,7 +323,7 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
  * Routine to set the Wxt536 communication protocol.
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
- * @param device_number The device number of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param device_address The device address of the Wxt536 (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
  * @param protocol A character describing the protocol to set the Wxt536 to use. One of: 
  *        WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC, WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC_CRC, 
  *        WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED, WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED_CRC.
@@ -339,7 +340,7 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_nu
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
  * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
  */
-int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,int device_number,char protocol)
+int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,char device_address,char protocol)
 {
 	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
 	char command_string[256];
@@ -357,7 +358,7 @@ int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,int 
 			protocol);
 		return FALSE;		
 	}
-	sprintf(command_string,"%dXU,M=%c",device_number,protocol);
+	sprintf(command_string,"%cXU,M=%c",device_address,protocol);
 	/* send the command and get the reply string */
 	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
 		return FALSE;
@@ -386,6 +387,11 @@ int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,int 
 			"Wrong reply parameter value ('%c' vd '%c').",parameter_value_list[0].Value_String[0],protocol);
 		return FALSE;		
 	}
+	return TRUE;
+}
+
+int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address)
+{
 	return TRUE;
 }
 

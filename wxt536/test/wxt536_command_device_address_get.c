@@ -42,7 +42,7 @@ static void Help(void);
  */
 int main(int argc, char *argv[])
 {
-	int device_address;
+	char device_address;
 
 	fprintf(stdout,"Wxt536 Get Device Address\n");
 	/* initialise logging */
@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
 			Wms_Serial_Error();
 		return 4;
 	}
-	fprintf(stdout,"The Wxt536 Device Address is %d\n",device_address);
+	fprintf(stdout,"The Wxt536 Device Address is '%c'\n",device_address);
 	/* close interface */
 	if(!Wms_Wxt536_Connection_Close("Wxt536 Get Device Address","wxt536_command_device_address_get.c"))
 	{

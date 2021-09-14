@@ -29,9 +29,9 @@ static char rcsid[] = "$Id$";
  */
 char Serial_Device_Name[256];
 /**
- * An integer representing the Vaisala Wxt536 device address to tested.
+ * A character identifying the Vaisala Wxt536 device address to tested.
  */
-int Device_Address = -1;
+char Device_Address = ' ';
 /**
  * A character representing the protocol we want the Wxt536 to use.
  * @see ../cdocs/wms_wxt536_command.html#WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC
@@ -99,7 +99,7 @@ int main(int argc, char *argv[])
 		return 3;
 	}
 	/* send command and read reply */
-	fprintf(stdout,"Setting Communication Protocol for Wxt536 with Device Address %d to %c.\n",Device_Address,
+	fprintf(stdout,"Setting Communication Protocol for Wxt536 with Device Address %c to %c.\n",Device_Address,
 		Protocol);
 	if(!Wms_Wxt536_Command_Comms_Settings_Protocol_Set("Wxt536 Set Protocol","wxt536_command_comms_protocol_set.c",
 						  Device_Address,Protocol))
@@ -142,20 +142,19 @@ static int Parse_Arguments(int argc, char *argv[])
 		{
 			if((i+1)<argc)
 			{
-				retval = sscanf(argv[i+1],"%d",&ivalue);
-				if(retval != 1)
+				if(strlen(argv[i+1]) != 1)
 				{
-					fprintf(stderr,"Wxt536 Set Protocol:Parse_Arguments:"
-						"Illegal device address %s.\n",argv[i+1]);
+					fprintf(stderr,"Wxt536 Acknowledge Active:Parse_Arguments:"
+						"Illegal device address '%s'.\n",argv[i+1]);
 					return FALSE;
 				}
-				Device_Address = ivalue;
+				Device_Address = argv[i+1][0];
 				i++;
 			}
 			else
 			{
-				fprintf(stderr,"Wxt536 Set Protocol:Parse_Arguments:"
-					"Device Address requires a number.\n");
+				fprintf(stderr,"Wxt536 Acknowledge Active:Parse_Arguments:"
+					"Device Address requires a character.\n");
 				return FALSE;
 			}
 		}
@@ -237,12 +236,12 @@ static void Help(void)
 {
 	fprintf(stdout,"Wxt536 Set Protocol:Help.\n");
 	fprintf(stdout,"Wxt536 Set Protocol sets the protocol for the Vaisala Wxt536.\n");
-	fprintf(stdout,"wxt536_command_comms_protocol_set [-serial_device|-se <filename>][-d[evice_address] <number>]\n");
+	fprintf(stdout,"wxt536_command_comms_protocol_set [-serial_device|-se <filename>][-d[evice_address] <character>]\n");
 	fprintf(stdout,"\t[-p[rotocol] <character>][-l[og_level] <number>][-h[elp]]\n");
 	fprintf(stdout,"\n");
 	fprintf(stdout,"\t-serial_device specifies the serial device name.\n");
 	fprintf(stdout,"\te.g. /dev/ttyS0 for Linux.\n");
-	fprintf(stdout,"\t-device_address specifies the Wxt536. This number is normally 0.\n");
+	fprintf(stdout,"\t-device_address specifies the Wxt536. This character is normally '0'.\n");
 	fprintf(stdout,"\t-log_level specifies the logging(0..5).\n");
 	fprintf(stdout,"\t-protocol specifies the communication protocol to use, one of:A|a|P|p.\n");
 	fprintf(stdout,"\t\tProtocol 'A' is ASCII automatic.\n");

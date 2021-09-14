@@ -29,9 +29,9 @@ static char rcsid[] = "$Id$";
  */
 char Serial_Device_Name[256];
 /**
- * An integer representing the Vaisala Wxt536 device address to tested.
+ * A character identifying the Vaisala Wxt536 device address to tested.
  */
-int Device_Address = -1;
+char Device_Address = ' ';
 
 /* internal routines */
 static int Parse_Arguments(int argc, char *argv[]);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 		return 3;
 	}
 	/* send command and read reply */
-	fprintf(stdout,"Testing whether Wxt536 with Device Address %d is active.\n",Device_Address);
+	fprintf(stdout,"Testing whether Wxt536 with Device Address '%c' is active.\n",Device_Address);
 	if(!Wms_Wxt536_Command_Ack_Active("Wxt536 Acknowledge Active",
 						  "wxt536_command_acknowledge_active.c",Device_Address))
 	{
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 			Wms_Serial_Error();
 		return 4;
 	}
-	fprintf(stdout,"Wxt536 with Device Address %d is active.\n",Device_Address);
+	fprintf(stdout,"Wxt536 with Device Address '%c' is active.\n",Device_Address);
 	/* close interface */
 	if(!Wms_Wxt536_Connection_Close("Wxt536 Acknowledge Active","wxt536_command_acknowledge_active.c"))
 	{
@@ -113,20 +113,19 @@ static int Parse_Arguments(int argc, char *argv[])
 		{
 			if((i+1)<argc)
 			{
-				retval = sscanf(argv[i+1],"%d",&ivalue);
-				if(retval != 1)
+				if(strlen(argv[i+1]) != 1)
 				{
 					fprintf(stderr,"Wxt536 Acknowledge Active:Parse_Arguments:"
-						"Illegal device address %s.\n",argv[i+1]);
+						"Illegal device address '%s'.\n",argv[i+1]);
 					return FALSE;
 				}
-				Device_Address = ivalue;
+				Device_Address = argv[i+1][0];
 				i++;
 			}
 			else
 			{
 				fprintf(stderr,"Wxt536 Acknowledge Active:Parse_Arguments:"
-					"Device Address requires a number.\n");
+					"Device Address requires a character.\n");
 				return FALSE;
 			}
 		}
@@ -188,11 +187,11 @@ static void Help(void)
 {
 	fprintf(stdout,"Wxt536 Acknowledge Active:Help.\n");
 	fprintf(stdout,"Wxt536 Acknowledge Active queries the Vaisala Wxt536 and gets it's device address.\n");
-	fprintf(stdout,"wxt536_command_device_address_get [-serial_device|-se <filename>][-d[evice_address] <number>]\n");
+	fprintf(stdout,"wxt536_command_device_address_get [-serial_device|-se <filename>][-d[evice_address] <character>]\n");
 	fprintf(stdout,"\t[-l[og_level] <number>][-h[elp]]\n");
 	fprintf(stdout,"\n");
 	fprintf(stdout,"\t-serial_device specifies the serial device name.\n");
 	fprintf(stdout,"\te.g. /dev/ttyS0 for Linux.\n");
-	fprintf(stdout,"\t-device_address specifies the Wxt536 to test whether it is active. This number is normally 0.\n");
+	fprintf(stdout,"\t-device_address specifies the Wxt536 to test whether it is active. This address is normally '0'.\n");
 	fprintf(stdout,"\t-log_level specifies the logging(0..5).\n");
 }

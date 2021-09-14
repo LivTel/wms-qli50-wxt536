@@ -105,12 +105,12 @@ struct Wxt536_Command_Wind_Data_Struct
 };
 
 extern int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply_string,int reply_string_length);
-extern int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,int *device_number);
-extern int Wms_Wxt536_Command_Ack_Active(char *class,char *source,int device_number);
-extern int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,int device_number,
+extern int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,char *device_address);
+extern int Wms_Wxt536_Command_Ack_Active(char *class,char *source,char device_address);
+extern int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,char device_address,
 						 struct Wxt536_Command_Comms_Settings_Struct *comms_settings);
-extern int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,int device_number,char protocol);
-extern int Wms_Wxt536_Command_Reset(char *class,char *source);
+extern int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,char device_address,char protocol);
+extern int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address);
 extern int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,struct Wxt536_Command_Wind_Data_Struct *data);
 
 #endif
