@@ -526,7 +526,7 @@ static int Wxt536_Parse_CSV_Reply(char *class,char *source,char *reply_string,
 		strcpy((*parameter_value_list)[(*parameter_value_count)].Value_String,equals_ptr+1);
 #if LOGGING > 9
 		Wms_Wxt536_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
-				      "Wxt536_Parse_CSV_Reply: Parsed keyword '%s with value '%s'.",
+				      "Wxt536_Parse_CSV_Reply: Parsed keyword '%s' with value '%s'.",
 				      (*parameter_value_list)[(*parameter_value_count)].Keyword,
 				      (*parameter_value_list)[(*parameter_value_count)].Value_String);
 #endif /* LOGGING */
