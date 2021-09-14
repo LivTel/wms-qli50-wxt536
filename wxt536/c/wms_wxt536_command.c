@@ -327,6 +327,8 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,char device_a
  * @param protocol A character describing the protocol to set the Wxt536 to use. One of: 
  *        WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC, WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC_CRC, 
  *        WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED, WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED_CRC.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC
  * @see #WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_AUTOMATIC_CRC
  * @see #WXT536_COMMAND_COMMS_SETTINGS_PROTOCOL_POLLED
@@ -395,6 +397,8 @@ int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,char
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
  * @param device_address The device address of the Wxt536(can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
  * @see #Wms_Wxt536_Command
  * @see #Wxt536_Parameter_Value_Struct
  * @see #Wxt536_Parse_CSV_Reply
@@ -409,6 +413,7 @@ int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address)
 	char command_string[256];
 	char reply_string[256];
 
+	Wms_Wxt536_Error_Number = 0;
 	sprintf(command_string,"%cXZ",device_address);
 	/* send the command and get the reply string */
 	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
@@ -416,6 +421,69 @@ int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address)
 	return TRUE;
 }
 
+/**
+ * Function to retrieve wind data from the Wxt536.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536(can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param data The address of an allocated Wxt536_Command_Wind_Data_Struct structure, to store the values retrieved
+ *        from the Wxt536 into.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Command_Wind_Data_Struct
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,char device_address,
+				     struct Wxt536_Command_Wind_Data_Struct *data)
+{
+	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
+	char command_string[256];
+	char reply_string[256];
+	int parameter_value_count;
+
+	Wms_Wxt536_Error_Number = 0;
+	if(data == NULL)
+	{
+		Wms_Wxt536_Error_Number = 123;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Wind_Data_Get:data was NULL.");
+		return FALSE;		
+	}
+	sprintf(command_string,"%cR1",device_address);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	/* parse the reply string into keyword/value pairs */
+	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
+		return FALSE;
+	/* Extract the relvant parameters from the parameter_value_list, parse them and store them in the
+	** return data structure */
+	if(!Wxt536_Parse_Parameter(class,source,"Dn","%lfD",parameter_value_list,parameter_value_count,
+				   &(data->Wind_Direction_Minimum)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Dm","%lfD",parameter_value_list,parameter_value_count,
+				   &(data->Wind_Direction_Average)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Dx","%lfD",parameter_value_list,parameter_value_count,
+				   &(data->Wind_Direction_Maximum)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Sn","%lfM",parameter_value_list,parameter_value_count,
+				   &(data->Wind_Speed_Minimum)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Sm","%lfM",parameter_value_list,parameter_value_count,
+				   &(data->Wind_Speed_Average)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Sx","%lfM",parameter_value_list,parameter_value_count,
+				   &(data->Wind_Speed_Maximum)))
+		return FALSE;
+	return TRUE;
+}
 /* ----------------------------------------------------------------------
 ** internal functions
 ** ---------------------------------------------------------------------- */

@@ -111,6 +111,7 @@ extern int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,char d
 						 struct Wxt536_Command_Comms_Settings_Struct *comms_settings);
 extern int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,char device_address,char protocol);
 extern int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address);
-extern int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,struct Wxt536_Command_Wind_Data_Struct *data);
+extern int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,char device_address,
+					    struct Wxt536_Command_Wind_Data_Struct *data);
 
 #endif
