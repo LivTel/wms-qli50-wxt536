@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
 		return 3;
 	}
 	/* send command and read reply */
-	fprintf(stdout,"Getting Communication Settings from Wxt536 with Device Address %d is active.\n",Device_Address);
+	fprintf(stdout,"Getting Communication Settings from Wxt536 with Device Address %d.\n",Device_Address);
 	if(!Wms_Wxt536_Command_Comms_Settings_Get("Wxt536 Comms Settings Get",
 						  "wxt536_comms_settings_get.c",Device_Address,&comms_settings))
 	{
