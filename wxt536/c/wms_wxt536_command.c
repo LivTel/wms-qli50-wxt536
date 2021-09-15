@@ -671,9 +671,11 @@ int Wms_Wxt536_Command_Supervisor_Data_Get(char *class,char *source,char device_
 	if(!Wxt536_Parse_Parameter(class,source,"Vr","%lfV",parameter_value_list,parameter_value_count,
 				   &(data->Reference_Voltage)))
 		return FALSE;
+	/* This field does not seem to be returned by our unit.
 	if(!Wxt536_Parse_Parameter(class,source,"Id","%256s",parameter_value_list,parameter_value_count,
 				   &(data->Information)))
 		return FALSE;
+	*/
 	return TRUE;	
 }
 

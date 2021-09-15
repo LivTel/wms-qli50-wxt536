@@ -110,7 +110,9 @@ int main(int argc, char *argv[])
 	fprintf(stdout,"Heating Voltage %.2f Volts.\n",supervisor_data.Heating_Voltage);
 	fprintf(stdout,"Supply Voltage %.2f Volts.\n",supervisor_data.Supply_Voltage);
 	fprintf(stdout,"Reference Voltage %.2f Volts.\n",supervisor_data.Reference_Voltage);
+	/* This field does not seem to be returned by our unit.
 	fprintf(stdout,"Information: %s.\n",supervisor_data.Information);
+	*/
 	/* close interface */
 	if(!Wms_Wxt536_Connection_Close("Wxt536 Get Supervisor Data","wxt536_command_supervisor_data_get.c"))
 	{

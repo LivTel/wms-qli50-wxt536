@@ -154,7 +154,8 @@ struct Wxt536_Command_Precipitation_Data_Struct
  * <dt>Supply_Voltage</dt> <dd>A double representing the supply voltage in Volts.</dd>
  * <dt>Reference_Voltage</dt> <dd>A double representing the reference voltage in Volts. The reference voltage is
  *     nominally 3.5V.</dd>
- * <dt>Information</dt> <dd>A string containing the returned information field.</dd>
+ * <dt>Information</dt> <dd>A string containing the returned information field. 
+ *                      This field does not seem to be returned by our unit.</dd>
  * </dl>
  */
 struct Wxt536_Command_Supervisor_Data_Struct
