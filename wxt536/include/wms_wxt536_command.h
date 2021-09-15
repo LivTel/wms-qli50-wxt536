@@ -167,6 +167,27 @@ struct Wxt536_Command_Supervisor_Data_Struct
 	char Information[256];
 };
 
+/**
+ * Data structure containing data parsed from a reply to a Analog Data Message (aR4).
+ * <dl>
+ * <dt>PT1000_Temperaure</dt> <dd>A double representing the PT1000 temperature in degrees Centigrade. 
+ *                            We do not have this sensor connected to our unit.</dd>
+ * <dt>Aux_Rain_Accumulation</dt> <dd>A double representing auxiliary rain accumulation in mm. 
+ *                                We do not have this sensor connected to our unit.</dd>
+ * <dt>Ultrasonic_Level_Voltage</dt> <dd>A double representing the ultrasonic level input voltage in Volts
+ *                                   (multiplied by the gain). We have a DRD11A rain sensor attached to this input.</dd>
+ * <dt>Solar_Radiation_Voltage</dt> <dd>A double representing the voltage returned by the pyranometer 
+ *                                  (in Volts multiplied by the gain)</dd>
+ * </dl>
+ */
+struct Wxt536_Command_Analogue_Data_Struct
+{
+	double PT1000_Temperaure;
+	double Aux_Rain_Accumulation;
+	double Ultrasonic_Level_Voltage;
+	double Solar_Radiation_Voltage;
+};
+
 extern int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply_string,int reply_string_length);
 extern int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,char *device_address);
 extern int Wms_Wxt536_Command_Ack_Active(char *class,char *source,char device_address);
@@ -182,4 +203,6 @@ extern int Wms_Wxt536_Command_Precipitation_Data_Get(char *class,char *source,ch
 						     struct Wxt536_Command_Precipitation_Data_Struct *data);
 extern int Wms_Wxt536_Command_Supervisor_Data_Get(char *class,char *source,char device_address,
 						  struct Wxt536_Command_Supervisor_Data_Struct *data);
+extern int Wms_Wxt536_Command_Analogue_Data_Get(char *class,char *source,char device_address,
+						struct Wxt536_Command_Analogue_Data_Struct *data);
 #endif
