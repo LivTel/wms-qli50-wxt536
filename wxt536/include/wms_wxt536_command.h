@@ -119,6 +119,30 @@ struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct
 	double Air_Pressure;
 };
 
+/**
+ * Data structure containing data parsed from a reply to a Precipitation Data Message (aR3).
+ * <dl>
+ * <dt>Rain_Accumulation</dt> <dd>A double representing the rain accumulation in mm.</dd>
+ * <dt>Rain_Duration</dt> <dd>A double representing the rain duration in seconds.</dd>
+ * <dt>Rain_Intensity</dt> <dd>A double representing the rain intensity in mm/h.</dd>
+ * <dt>Hail_Accumulation</dt> <dd>A double representing the hail accumulation in hits/cm^2.</dd>
+ * <dt>Hail_Duration</dt> <dd>A double representing the hail duration in seconds.</dd>
+ * <dt>Hail_Intensity</dt> <dd>A double representing the hail intensity in hits/cm^2h.</dd>
+ * <dt>Rain_Peak_Intensity</dt> <dd>A double representing the rain peak intensity in mm/h.</dd>
+ * <dt>Hail_Peak_Intensity</dt> <dd>A double representing the hail peak intensity in hits/cm^2h.</dd>
+ * </dl>
+ */
+struct Wxt536_Command_Precipitation_Data_Struct
+{
+	double Rain_Accumulation;
+	double Rain_Duration;
+	double Rain_Intensity;
+	double Hail_Accumulation;
+	double Hail_Duration;
+	double Hail_Intensity;
+	double Rain_Peak_Intensity;
+	double Hail_Peak_Intensity;
+};
 
 extern int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply_string,int reply_string_length);
 extern int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,char *device_address);
@@ -131,5 +155,7 @@ extern int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,char device
 					    struct Wxt536_Command_Wind_Data_Struct *data);
 extern int Wms_Wxt536_Command_Pressure_Temperature_Humidity_Data_Get(char *class,char *source,char device_address,
 					    struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct *data);
+extern int Wms_Wxt536_Command_Precipitation_Data_Get(char *class,char *source,char device_address,
+						     struct Wxt536_Command_Precipitation_Data_Struct *data);
 
 #endif
