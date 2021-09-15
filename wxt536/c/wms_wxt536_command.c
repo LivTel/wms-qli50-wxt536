@@ -613,6 +613,70 @@ int Wms_Wxt536_Command_Precipitation_Data_Get(char *class,char *source,char devi
 	return TRUE;	
 }
 
+
+/**
+ * Function to retrieve supervisor data from the Wxt536. This is things like supply voltages, 
+ * heater voltages/temperatures etc.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536(can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param data The address of an allocated Wxt536_Command_Supervisor_Data_Struct structure, 
+ *             to store the values retrieved from the Wxt536 into.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Command_Supervisor_Data_Struct
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Supervisor_Data_Get(char *class,char *source,char device_address,
+						  struct Wxt536_Command_Supervisor_Data_Struct *data)
+{
+	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
+	char command_string[256];
+	char reply_string[256];
+	int parameter_value_count;
+
+	Wms_Wxt536_Error_Number = 0;
+	if(data == NULL)
+	{
+		Wms_Wxt536_Error_Number = 126;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Supervisor_Data_Get:data was NULL.");
+		return FALSE;		
+	}
+	sprintf(command_string,"%cR5",device_address);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	/* parse the reply string into keyword/value pairs */
+	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
+		return FALSE;
+	/* Extract the relevant parameters from the parameter_value_list, parse them and store them in the
+	** return data structure */
+	if(!Wxt536_Parse_Parameter(class,source,"Th","%lfC",parameter_value_list,parameter_value_count,
+				   &(data->Heating_Temperaure)))
+		return FALSE;
+	/* NB Not sure the units are 'N' when the heater is on. Manual is unclear? */
+	if(!Wxt536_Parse_Parameter(class,source,"Vh","%lfN",parameter_value_list,parameter_value_count,
+				   &(data->Heating_Voltage)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Vs","%lfV",parameter_value_list,parameter_value_count,
+				   &(data->Supply_Voltage)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Vr","%lfV",parameter_value_list,parameter_value_count,
+				   &(data->Reference_Voltage)))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"Id","%256s",parameter_value_list,parameter_value_count,
+				   &(data->Information)))
+		return FALSE;
+	return TRUE;	
+}
+
 /* ----------------------------------------------------------------------
 ** internal functions
 ** ---------------------------------------------------------------------- */

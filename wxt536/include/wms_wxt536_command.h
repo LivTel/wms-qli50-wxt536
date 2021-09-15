@@ -146,6 +146,26 @@ struct Wxt536_Command_Precipitation_Data_Struct
 	double Hail_Peak_Intensity;
 };
 
+/**
+ * Data structure containing data parsed from a reply to a Precipitation Data Message (aR3).
+ * <dl>
+ * <dt>Heating_Temperaure</dt> <dd>A double representing the heating temperature in degrees Centigrade.</dd>
+ * <dt>Heating_Voltage</dt> <dd>A double representing the heating voltage in Volts?.</dd>
+ * <dt>Supply_Voltage</dt> <dd>A double representing the supply voltage in Volts.</dd>
+ * <dt>Reference_Voltage</dt> <dd>A double representing the reference voltage in Volts. The reference voltage is
+ *     nominally 3.5V.</dd>
+ * <dt>Information</dt> <dd>A string containing the returned information field.</dd>
+ * </dl>
+ */
+struct Wxt536_Command_Supervisor_Data_Struct
+{
+	double Heating_Temperaure;
+	double Heating_Voltage;
+	double Supply_Voltage;
+	double Reference_Voltage;
+	char Information[256];
+};
+
 extern int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply_string,int reply_string_length);
 extern int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,char *device_address);
 extern int Wms_Wxt536_Command_Ack_Active(char *class,char *source,char device_address);
@@ -159,5 +179,6 @@ extern int Wms_Wxt536_Command_Pressure_Temperature_Humidity_Data_Get(char *class
 					    struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct *data);
 extern int Wms_Wxt536_Command_Precipitation_Data_Get(char *class,char *source,char device_address,
 						     struct Wxt536_Command_Precipitation_Data_Struct *data);
-
+extern int Wms_Wxt536_Command_Supervisor_Data_Get(char *class,char *source,char device_address,
+						  struct Wxt536_Command_Supervisor_Data_Struct *data);
 #endif
