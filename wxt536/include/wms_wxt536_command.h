@@ -128,8 +128,10 @@ struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct
  * <dt>Hail_Accumulation</dt> <dd>A double representing the hail accumulation in hits/cm^2.</dd>
  * <dt>Hail_Duration</dt> <dd>A double representing the hail duration in seconds.</dd>
  * <dt>Hail_Intensity</dt> <dd>A double representing the hail intensity in hits/cm^2h.</dd>
- * <dt>Rain_Peak_Intensity</dt> <dd>A double representing the rain peak intensity in mm/h.</dd>
- * <dt>Hail_Peak_Intensity</dt> <dd>A double representing the hail peak intensity in hits/cm^2h.</dd>
+ * <dt>Rain_Peak_Intensity</dt> <dd>A double representing the rain peak intensity in mm/h. 
+ *                              Not returned by our weather station.</dd>
+ * <dt>Hail_Peak_Intensity</dt> <dd>A double representing the hail peak intensity in hits/cm^2h. 
+ *                              Not returned by our weather station.</dd>
  * </dl>
  */
 struct Wxt536_Command_Precipitation_Data_Struct

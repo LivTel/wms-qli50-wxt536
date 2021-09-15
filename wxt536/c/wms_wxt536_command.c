@@ -602,12 +602,14 @@ int Wms_Wxt536_Command_Precipitation_Data_Get(char *class,char *source,char devi
 	if(!Wxt536_Parse_Parameter(class,source,"Hi","%lfM",parameter_value_list,parameter_value_count,
 				   &(data->Hail_Intensity)))
 		return FALSE;
+	/* Not returned by our weather station 
 	if(!Wxt536_Parse_Parameter(class,source,"Rp","%lfM",parameter_value_list,parameter_value_count,
 				   &(data->Rain_Peak_Intensity)))
 		return FALSE;
 	if(!Wxt536_Parse_Parameter(class,source,"Hp","%lfM",parameter_value_list,parameter_value_count,
 				   &(data->Hail_Peak_Intensity)))
 		return FALSE;
+	*/
 	return TRUE;	
 }
 

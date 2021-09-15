@@ -112,8 +112,10 @@ int main(int argc, char *argv[])
 	fprintf(stdout,"Hail Accumulation %.2f hits/cm^2.\n",precipitation_data.Hail_Accumulation);
 	fprintf(stdout,"Hail Duration %.2f s.\n",precipitation_data.Hail_Duration);
 	fprintf(stdout,"Hail Intensity %.2f hits/cm^2h.\n",precipitation_data.Hail_Intensity);
+	/* Not returned by our weather station
 	fprintf(stdout,"Rain Peak Intensity %.2f mm/h.\n",precipitation_data.Rain_Peak_Intensity);
 	fprintf(stdout,"Hail Peak Intensity %.2f hits/cm^2h.\n",precipitation_data.Hail_Peak_Intensity);
+	*/
 	/* close interface */
 	if(!Wms_Wxt536_Connection_Close("Wxt536 Get Precipitation Data","wxt536_command_precipitation_data_get.c"))
 	{
