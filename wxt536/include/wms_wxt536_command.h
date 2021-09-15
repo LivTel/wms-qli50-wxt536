@@ -104,6 +104,22 @@ struct Wxt536_Command_Wind_Data_Struct
 	double Wind_Speed_Maximum;
 };
 
+/**
+ * Data structure containing data parsed from a reply to a Pressure/Temperature/Humidity Data Message (aR2).
+ * <dl>
+ * <dt>Air_Temperature</dt> <dd>A double representing the air temperature in degrees Centigrade.</dd>
+ * <dt>Relative_Humidity</dt> <dd>A double representing the relative humidity in percent RH.</dd>
+ * <dt>Air_Pressure</dt> <dd>A double representing the air pressure in hPA (Hectopascals = mbar).</dd>
+ * </dl>
+ */
+struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct
+{
+	double Air_Temperature;
+	double Relative_Humidity;
+	double Air_Pressure;
+};
+
+
 extern int Wms_Wxt536_Command(char *class,char *source,char *command_string,char *reply_string,int reply_string_length);
 extern int Wms_Wxt536_Command_Device_Address_Get(char *class,char *source,char *device_address);
 extern int Wms_Wxt536_Command_Ack_Active(char *class,char *source,char device_address);
@@ -113,5 +129,7 @@ extern int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *sour
 extern int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address);
 extern int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,char device_address,
 					    struct Wxt536_Command_Wind_Data_Struct *data);
+extern int Wms_Wxt536_Command_Pressure_Temperature_Humidity_Data_Get(char *class,char *source,char device_address,
+					    struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct *data);
 
 #endif
