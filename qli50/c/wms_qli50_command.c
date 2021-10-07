@@ -69,7 +69,6 @@ int Wms_Qli50_Command(char *class,char *source,char *command_string,char *reply_
 		Wms_Qli50_Error_Number = 100;
 		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command:Command String was NULL.");
 		return FALSE;
-		
 	}
 	if(strlen(command_string) >= 256)
 	{
@@ -77,7 +76,6 @@ int Wms_Qli50_Command(char *class,char *source,char *command_string,char *reply_
 		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command:Command String was too long (%lu vs 255).",
 			strlen(command_string));
 		return FALSE;
-		
 	}
 #if LOGGING > 9
 	Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Command(%s) started.",command_string);
@@ -256,7 +254,50 @@ int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
 }
 
 
-int Wms_Qli50_Command_Par(char *class,char *source)
+/**
+ * The PAR command returns configuration parameters from the Qli50.
+ * It rerurns many lines of data, and so cannot use Wms_Qli50_Command.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param reply_string The reply from the QLI50 containing the configuration parameter data.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see wms_qli50_general.html#Wms_Qli50_Log
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Format
+ * @see wms_qli50_general.html#Wms_Qli50_Error_Number
+ * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ */
+int Wms_Qli50_Command_Par(char *class,char *source,char *reply_string)
 {
+	char command_string[32];
+	int done = FALSE;
+	int retval;
+	
+	strcpy(command_string,"PAR");
+	if(!Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,command_string,strlen(command_string)))
+	{
+		Wms_Qli50_Error_Number = ;
+		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Par:Failed to write command string '%s'.",
+			command_string);
+		return FALSE;
+	}
+	/* read any reply */
+	/* diddly this is where we need a Wms_Serial_Read_Line with a timeout.
+	** We need to keep reading lines of text until the text stops, and the command times out */
+	done = FALSE;
+	while(done == FALSE)
+	{
+		retval = Wms_Serial_Read_Line(class,source,Wms_Qli50_Serial_Handle,TERMINATOR_CR,message,255,&bytes_read))
+		message[bytes_read] = '\0';
+		if(strlen(message) >= reply_string_length)
+		{
+			Wms_Qli50_Error_Number = ;
+			sprintf(Wms_Qli50_Error_String,
+				"Wms_Qli50_Command_Par:Reply message was too long to fit into reply string (%lu vs %d).",
+				strlen(message),reply_string_length);
+			return FALSE;
+		}
+		done = (retval == FALSE);
+	}/* end while */
 	return TRUE;
 }

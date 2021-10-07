@@ -7,7 +7,7 @@ extern int Wms_Qli50_Command(char *class,char *source,char *command_string,char 
 extern int Wms_Qli50_Command_Close(char *class,char *source);
 extern int Wms_Qli50_Command_Echo(char *class,char *source,int onoff);
 extern int Wms_Qli50_Command_Open(char *class,char *source,char qli_id);
-extern int Wms_Qli50_Command_Par(char *class,char *source);
+extern int Wms_Qli50_Command_Par(char *class,char *source,char *reply_string);
 extern int Wms_Qli50_Command_Reset(char *class,char *source);
 extern int Wms_Qli50_Command_Sta(char *class,char *source);
 extern int Wms_Qli50_Command_Read_Sensors(char *class,char *source,char qli_id,char seq_id);
