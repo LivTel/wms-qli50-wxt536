@@ -134,14 +134,13 @@ int Wms_Qli50_Command(char *class,char *source,char *command_string,char *reply_
 int Wms_Qli50_Command_Close(char *class,char *source)
 {
 	char reply_string[256];
-	int retval;
 
 	if(!Wms_Qli50_Command(class,source,"CLOSE",reply_string,255))
 		return FALSE;
 	/* think about cr removal */
 	if(strncmp(reply_string,"LINE CLOSED",strlen("LINE CLOSED")) != 0)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 105;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Close:Unexpected reply string (%s).",reply_string);
 		return FALSE;		
@@ -172,7 +171,7 @@ int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
 
 	if(!WMS_QLI50_IS_BOOLEAN(onoff))
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 106;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Echo:onoff was not a boolean (%d).",onoff);
 		return FALSE;		
@@ -187,14 +186,14 @@ int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
 	retval = sscanf(reply_string,"ECHO: %31s",reply_onoff_string);
 	if(retval != 1)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 107;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Echo:Unexpected reply string (%s).",reply_string);
 		return FALSE;		
 	}
 	if(onoff && (strcmp(reply_onoff_string,"ON") != 0))
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 108;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Echo:Echo ON: Unexpected reply string (%s,%s).",reply_string,
 			reply_onoff_string);
@@ -202,7 +201,7 @@ int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
 	}
 	else if((onoff == FALSE) && (strcmp(reply_onoff_string,"OFF") != 0))
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 109;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Echo:Echo OFF: Unexpected reply string (%s,%s).",reply_string,
 			reply_onoff_string);
@@ -234,17 +233,17 @@ int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
 	sprintf(command_string,"OPEN %c",qli_id);
 	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255))
 		return FALSE;
-	retval = sscanf(reply_string,"%c OPENED FOR OPERATOR COMMANDS",reply_qli_id);
+	retval = sscanf(reply_string,"%c OPENED FOR OPERATOR COMMANDS",&reply_qli_id);
 	if(retval != 1)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 110;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Open:Unexpected reply string (%s).",reply_string);
 		return FALSE;		
 	}
 	if(qli_id != reply_qli_id)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 111;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Open: Unexpected reply string (%s,%c,%c).",reply_string,qli_id,
 			reply_qli_id);
@@ -260,6 +259,7 @@ int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
  * @param reply_string The reply from the QLI50 containing the configuration parameter data.
+ * @param reply_string_length The length of the reply_string buffer.
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
  * @see wms_qli50_general.html#Wms_Qli50_Log
@@ -267,37 +267,127 @@ int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
  */
-int Wms_Qli50_Command_Par(char *class,char *source,char *reply_string)
+int Wms_Qli50_Command_Par(char *class,char *source,char *reply_string,int reply_string_length)
 {
 	char command_string[32];
+	char message[256];
 	int done = FALSE;
-	int retval;
+	int retval,bytes_read;
+
 	
 	strcpy(command_string,"PAR");
 	if(!Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,command_string,strlen(command_string)))
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 112;
 		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Par:Failed to write command string '%s'.",
 			command_string);
 		return FALSE;
 	}
+	/* initialise reply string */
+	if(reply_string != NULL)
+		strcpy(reply_string,"");
 	/* read any reply */
-	/* diddly this is where we need a Wms_Serial_Read_Line with a timeout.
-	** We need to keep reading lines of text until the text stops, and the command times out */
+	/* We need a Wms_Serial_Read_Line with a timeout.
+	** We need to keep reading lines of text until the text stops, and the read times out */
 	done = FALSE;
 	while(done == FALSE)
 	{
-		retval = Wms_Serial_Read_Line(class,source,Wms_Qli50_Serial_Handle,TERMINATOR_CR,message,255,&bytes_read))
+		retval = Wms_Serial_Read_Line(class,source,Wms_Qli50_Serial_Handle,TERMINATOR_CR,message,255,
+					      &bytes_read);
 		message[bytes_read] = '\0';
-		if(strlen(message) >= reply_string_length)
+		if(reply_string != NULL)
 		{
-			Wms_Qli50_Error_Number = ;
-			sprintf(Wms_Qli50_Error_String,
-				"Wms_Qli50_Command_Par:Reply message was too long to fit into reply string (%lu vs %d).",
-				strlen(message),reply_string_length);
-			return FALSE;
+			if((strlen(reply_string)+strlen(message)+1) >= reply_string_length)
+			{
+				Wms_Qli50_Error_Number = 113;
+				sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Par:"
+					"Reply message was too long to fit into reply string ((%lu+%lu) vs %d).",
+					strlen(reply_string),strlen(message),reply_string_length);
+				return FALSE;
+			}
+			strcat(reply_string,message);
 		}
 		done = (retval == FALSE);
 	}/* end while */
 	return TRUE;
 }
+
+/**
+ * Command to initiate a hardware reset of the Qli50.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see #Wms_Qli50_Command
+ * @see wms_qli50_general.html#Wms_Qli50_Log
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Format
+ * @see wms_qli50_general.html#Wms_Qli50_Error_Number
+ * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ */
+int Wms_Qli50_Command_Reset(char *class,char *source)
+{
+	char reply_string[256];
+
+	if(!Wms_Qli50_Command(class,source,"RESET",reply_string,255))
+		return FALSE;
+	return TRUE;
+}
+
+/**
+ * The STA command returns status from the Qli50.
+ * It rerurns many lines of data, and so cannot use Wms_Qli50_Command.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param reply_string The reply from the QLI50 containing the configuration parameter data.
+ * @param reply_string_length The length of the reply_string buffer.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see wms_qli50_general.html#Wms_Qli50_Log
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Format
+ * @see wms_qli50_general.html#Wms_Qli50_Error_Number
+ * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ */
+int Wms_Qli50_Command_Sta(char *class,char *source,char *reply_string,int reply_string_length)
+{
+	char command_string[32];
+	char message[256];
+	int done = FALSE;
+	int retval,bytes_read;
+
+	strcpy(command_string,"STA");
+	if(!Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,command_string,strlen(command_string)))
+	{
+		Wms_Qli50_Error_Number = 114;
+		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Sta:Failed to write command string '%s'.",
+			command_string);
+		return FALSE;
+	}
+	/* initialise reply string */
+	if(reply_string != NULL)
+		strcpy(reply_string,"");
+	/* read any reply */
+	/* We need a Wms_Serial_Read_Line with a timeout.
+	** We need to keep reading lines of text until the text stops, and the read times out */
+	done = FALSE;
+	while(done == FALSE)
+	{
+		retval = Wms_Serial_Read_Line(class,source,Wms_Qli50_Serial_Handle,TERMINATOR_CR,message,255,
+					      &bytes_read);
+		message[bytes_read] = '\0';
+		if(reply_string != NULL)
+		{
+			if((strlen(reply_string)+strlen(message)+1) >= reply_string_length)
+			{
+				Wms_Qli50_Error_Number = 115;
+				sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Sta:"
+					"Reply message was too long to fit into reply string ((%lu+%lu) vs %d).",
+					strlen(reply_string),strlen(message),reply_string_length);
+				return FALSE;
+			}
+			strcat(reply_string,message);
+		}
+		done = (retval == FALSE);
+	}/* end while */
+	return TRUE;
+}
+
