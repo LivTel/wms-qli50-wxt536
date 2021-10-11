@@ -158,7 +158,7 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 #if LOGGING > 0
 	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Serial_Serial_Open(%s).",handle->Device_Name);
 #endif /* LOGGING */
-	handle->Serial_Fd = open(handle->Device_Name, O_RDWR | O_NOCTTY | O_NONBLOCK);
+	handle->Serial_Fd = open(handle->Device_Name, O_RDWR | O_NOCTTY );
 	if(handle->Serial_Fd < 0)
 	{
 		open_errno = errno;
@@ -171,17 +171,6 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Serial_Open with FD %d.",
 			     handle->Serial_Fd);
 #endif /* LOGGING */
-	/* make non-blocking */
-	/* diddly */
-	retval = fcntl(handle->Serial_Fd, F_SETFL, fcntl(handle->Serial_Fd, F_GETFL) & ~O_NONBLOCK);
-	if(retval != 0)
-	{
-		open_errno = errno;
-		Wms_Serial_Error_Number = 10;
-		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: fcntl failed (%d = %s).",open_errno,
-			strerror(open_errno));
-		return FALSE;
-	}	
 	/* get current serial options */
 	retval = tcgetattr(handle->Serial_Fd,&(handle->Serial_Options_Saved));
 	if(retval != 0)
@@ -197,14 +186,14 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	/* set control flags and baud rate */
 	handle->Serial_Options.c_cflag = Serial_Attribute_Data.Baud_Rate|Serial_Attribute_Data.Control_Flags;
 	/* select raw input, not line input. */
-	handle->Serial_Options.c_lflag = Serial_Attribute_Data.Local_Flags;
+	handle->Serial_Options.c_lflag = Serial_Attribute_Data.Local_Flags & ~(ICANON);
 	/* ignore parity errors */
 	handle->Serial_Options.c_iflag = Serial_Attribute_Data.Input_Flags;
 	/* set raw output */
 	handle->Serial_Options.c_oflag = Serial_Attribute_Data.Output_Flags;
-	/* blocking read until 1 char arrives */
-	handle->Serial_Options.c_cc[VMIN]=1;
-	handle->Serial_Options.c_cc[VTIME]=0;
+	/* wait for up to 10 deciseconds before timing out input */
+	handle->Serial_Options.c_cc[VMIN]=0;
+	handle->Serial_Options.c_cc[VTIME]=10;
 #if LOGGING > 2
 	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
 	      "Wms_Serial_Open:New Attr:Input:%#x,Output:%#x,Local:%#x,Control:%#x,Min:%c,Time:%c.",
