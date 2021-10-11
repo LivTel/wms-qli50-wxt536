@@ -185,7 +185,7 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	bzero(&(handle->Serial_Options), sizeof(handle->Serial_Options));
 	/* set control flags and baud rate */
 	handle->Serial_Options.c_cflag = Serial_Attribute_Data.Baud_Rate|Serial_Attribute_Data.Control_Flags;
-	/* select raw input, not line input. */
+	/* select raw input, clear ICANON to switch off canonical mode (character not line input). */
 	handle->Serial_Options.c_lflag = Serial_Attribute_Data.Local_Flags & ~(ICANON);
 	/* ignore parity errors */
 	handle->Serial_Options.c_iflag = Serial_Attribute_Data.Input_Flags;
