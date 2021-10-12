@@ -29,6 +29,30 @@
  * The terminator used to delimit the end of each line read. <cr> in this case.
  */
 #define TERMINATOR_CR         ("\r")
+/**
+ * The terminator used to delimit the end of each line read. <cr><lf> in this case.
+ */
+#define TERMINATOR_CRLF         ("\r\n")
+/**
+ * ENQ (Enquiry) control character (Ctrl-E).
+ */
+#define CHARACTER_ENQ         ('\x05')
+/**
+ * ETX (End of text) control character (Ctrl-C).
+ */
+#define CHARACTER_ETX         ('\x03')
+/**
+ * SOH (Start of header) control character (Ctrl-A).
+ */
+#define CHARACTER_SOH         ('\x01')
+/**
+ * STX (Start of text) control character (Ctrl-B).
+ */
+#define CHARACTER_STX         ('\x02')
+/**
+ * SYN (Synchronous idle) control character (Ctrl-V).
+ */
+#define CHARACTER_SYN         ('\x16')
 
 /* internal variables */
 /**
@@ -43,13 +67,16 @@ static char rcsid[] = "$Id$";
  * and wait for a reply string.
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
- * @param The command to send to the VaisalaQli50 , as a NULL terminated string. The standard CR terminator
+ * @param The command to send to the Vaisala Qli50 , as a NULL terminated string. The standard CR terminator
  *        will be added to this string before onward transmission to the Qli50.
  * @param reply_string An empty string, on return this is filled with any reply received from the Qli50.
  * @param reply_string_length The allocated length of the reply_string buffer.
+ * @param reply_terminator The terminator to search for when reading the reply string. This is normally TERMINATOR_CR
+ *        for most Qli50 commands, but results are terminated with TERMINATOR_CRLF.
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
  * @see #TERMINATOR_CR
+ * @see #TERMINATOR_CRLF
  * @see wms_qli50_connection.html#Wms_Qli50_Serial_Handle
  * @see wms_qli50_general.html#Wms_Qli50_Log
  * @see wms_qli50_general.html#Wms_Qli50_Log_Format
@@ -58,7 +85,8 @@ static char rcsid[] = "$Id$";
  * @see ../../serial/cdocs/wms_serial_serial.html#Wms_Serial_Write
  * @see ../../serial/cdocs/wms_serial_serial.html#Wms_Serial_Read_Line
  */
-int Wms_Qli50_Command(char *class,char *source,char *command_string,char *reply_string,int reply_string_length)
+int Wms_Qli50_Command(char *class,char *source,char *command_string,
+		      char *reply_string,int reply_string_length,char *reply_terminator)
 {
 	char message[256];
 	int bytes_read;
@@ -92,7 +120,13 @@ int Wms_Qli50_Command(char *class,char *source,char *command_string,char *reply_
 	/* read any reply */
 	if(reply_string != NULL)
 	{
-		if(!Wms_Serial_Read_Line(class,source,Wms_Qli50_Serial_Handle,TERMINATOR_CR,message,255,&bytes_read))
+		if(reply_terminator == NULL)
+		{
+			Wms_Qli50_Error_Number = 116;
+			sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command:reply terminator string is NULL.");
+			return FALSE;
+		}
+		if(!Wms_Serial_Read_Line(class,source,Wms_Qli50_Serial_Handle,reply_terminator,message,255,&bytes_read))
 		{
 			Wms_Qli50_Error_Number = 103;
 			sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command:Failed to read reply line.");
@@ -135,7 +169,7 @@ int Wms_Qli50_Command_Close(char *class,char *source)
 {
 	char reply_string[256];
 
-	if(!Wms_Qli50_Command(class,source,"CLOSE",reply_string,255))
+	if(!Wms_Qli50_Command(class,source,"CLOSE",reply_string,255,TERMINATOR_CR))
 		return FALSE;
 	/* think about cr removal */
 	if(strncmp(reply_string,"LINE CLOSED",strlen("LINE CLOSED")) != 0)
@@ -181,7 +215,7 @@ int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
 	else
 		strcpy(onoff_string,"OFF");
 	sprintf(command_string,"ECHO %s",onoff_string);
-	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255))
+	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255,TERMINATOR_CR))
 		return FALSE;
 	retval = sscanf(reply_string,"ECHO: %31s",reply_onoff_string);
 	if(retval != 1)
@@ -231,7 +265,7 @@ int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
 	int retval;
 
 	sprintf(command_string,"OPEN %c",qli_id);
-	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255))
+	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255,TERMINATOR_CR))
 		return FALSE;
 	retval = sscanf(reply_string,"%c OPENED FOR OPERATOR COMMANDS",&reply_qli_id);
 	if(retval != 1)
@@ -328,7 +362,7 @@ int Wms_Qli50_Command_Reset(char *class,char *source)
 {
 	char reply_string[256];
 
-	if(!Wms_Qli50_Command(class,source,"RESET",reply_string,255))
+	if(!Wms_Qli50_Command(class,source,"RESET",reply_string,255,TERMINATOR_CR))
 		return FALSE;
 	return TRUE;
 }
@@ -391,3 +425,58 @@ int Wms_Qli50_Command_Sta(char *class,char *source,char *reply_string,int reply_
 	return TRUE;
 }
 
+/**
+ * Command the Qli50 to start reading it's sensors.
+ * There is no reply to this message.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param qli_id A character representing which QLI50 to use, this is normally 'A'.
+ * @param seq_id A character respresenting which saved sequence in the Qli50 to use, this is normally 'A'.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see wms_qli50_general.html#Wms_Qli50_Log
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Format
+ * @see wms_qli50_general.html#Wms_Qli50_Error_Number
+ * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see #CHARACTER_SYN
+ * @see #TERMINATOR_CR
+ */
+int Wms_Qli50_Command_Read_Sensors(char *class,char *source,char qli_id,char seq_id)
+{
+	char command_string[32];
+
+	sprintf(command_string,"%c%c%c",CHARACTER_SYN,qli_id,seq_id);
+	if(!Wms_Qli50_Command(class,source,command_string,NULL,0,NULL))
+		return FALSE;
+	return TRUE;
+}
+
+/**
+ * Command the Qli50 to send the results of the last sampling of the sensors.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param qli_id A character representing which QLI50 to use, this is normally 'A'.
+ * @param seq_id A character respresenting which saved sequence in the Qli50 to use, this is normally 'A'.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see wms_qli50_general.html#Wms_Qli50_Log
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Format
+ * @see wms_qli50_general.html#Wms_Qli50_Error_Number
+ * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see #CHARACTER_ENQ
+ * @see #TERMINATOR_CRLF
+ */
+int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq_id)
+{
+	char command_string[32];
+	char reply_string[256];
+	int retval;
+
+	sprintf(command_string,"%c%c%c",CHARACTER_ENQ,qli_id,seq_id);
+	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255,TERMINATOR_CRLF))
+		return FALSE;
+	/* parse the reply data 
+	** This is in the format: <soh>qli_id seq_id<stx><reading> [,<reading>...]<etx><cr><lf> */
+	
+	return TRUE;
+}

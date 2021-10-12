@@ -3,7 +3,8 @@
 #ifndef WMS_QLI50_COMMAND_H
 #define WMS_QLI50_COMMAND_H
 
-extern int Wms_Qli50_Command(char *class,char *source,char *command_string,char *reply_string,int reply_string_length);
+extern int Wms_Qli50_Command(char *class,char *source,char *command_string,
+			     char *reply_string,int reply_string_length,char *reply_terminator);
 extern int Wms_Qli50_Command_Close(char *class,char *source);
 extern int Wms_Qli50_Command_Echo(char *class,char *source,int onoff);
 extern int Wms_Qli50_Command_Open(char *class,char *source,char qli_id);
