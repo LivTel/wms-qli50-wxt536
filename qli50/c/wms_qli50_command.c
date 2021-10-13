@@ -479,19 +479,22 @@ int Wms_Qli50_Command_Read_Sensors(char *class,char *source,char qli_id,char seq
  * @param source The source parameter for logging.
  * @param qli_id A character representing which QLI50 to use, this is normally 'A'.
  * @param seq_id A character respresenting which saved sequence in the Qli50 to use, this is normally 'A'.
+ * @param data The address of a structure of type Wms_Qli50_Data_Struct, on a successful return this is filled in
+ *        with the parsed data.
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
- * @see wms_qli50_general.html#Wms_Qli50_Log
- * @see wms_qli50_general.html#Wms_Qli50_Log_Format
- * @see wms_qli50_general.html#Wms_Qli50_Error_Number
- * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see #Wms_Qli50_Data_Struct
  * @see #CHARACTER_ENQ
  * @see #CHARACTER_SOH
  * @see #CHARACTER_STX
  * @see #CHARACTER_ETX
  * @see #TERMINATOR_CRLF
+ * @see wms_qli50_general.html#Wms_Qli50_Log
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Format
+ * @see wms_qli50_general.html#Wms_Qli50_Error_Number
+ * @see wms_qli50_general.html#Wms_Qli50_Error_String
  */
-int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq_id)
+int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq_id,struct Wms_Qli50_Data_Struct *data)
 {
 	char command_string[32];
 	char reply_string[256];
@@ -505,7 +508,7 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	** This is in the format: <soh>qli_id seq_id<stx><reading> [,<reading>...]<etx><cr><lf> */
 	if(reply_string[0] != CHARACTER_SOH)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 117;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:<soh> not found in reply string '%s' (%d).",
 			reply_string,(int)(reply_string[0]));
@@ -513,7 +516,7 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	}
 	if(reply_string[1] != qli_id)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 118;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:Wrong qli_id '%c' (vs '%c') found in reply string '%s'.",
 			reply_string[1],qli_id,reply_string);
@@ -521,7 +524,7 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	}
 	if(reply_string[2] != seq_id)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 119;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:Wrong seq_id '%c' (vs '%c') found in reply string '%s'.",
 			reply_string[2],seq_id,reply_string);
@@ -529,7 +532,7 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	}
 	if(reply_string[3] != CHARACTER_STX)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 120;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:<stx> not found in reply string '%s' (%d).",
 			reply_string,(int)(reply_string[3]));
@@ -540,7 +543,7 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	ch_ptr = strchr(reply_string+4,CHARACTER_ETX);
 	if(ch_ptr == NULL)
 	{
-		Wms_Qli50_Error_Number = ;
+		Wms_Qli50_Error_Number = 121;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:Failed to find <etx> in reply string '%s'.",
 			reply_string);
