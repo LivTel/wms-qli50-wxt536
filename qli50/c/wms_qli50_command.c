@@ -426,7 +426,7 @@ int Wms_Qli50_Command_Sta(char *class,char *source,char *reply_string,int reply_
 }
 
 /**
- * Command the Qli50 to start reading it's sensors.
+ * Command the Qli50 to start reading it's sensors. This is done by sending the '<syn> qli_id seq_id <cr>' command.
  * There is no reply to this message.
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
@@ -453,6 +453,28 @@ int Wms_Qli50_Command_Read_Sensors(char *class,char *source,char qli_id,char seq
 
 /**
  * Command the Qli50 to send the results of the last sampling of the sensors.
+ * This is done by sending the '<enq> qli_id seq_id <cr>' command.
+ * The reply is of the format: "<soh>qli_id seq_id<stx><reading> [,<reading>...]<etx><cr><lf>"
+ * The sensor readings for sequence 'A' (the one used by the LT) are configurable, but for the LT the current
+ * format is (as defined in Wms.cfg, QLI50_config.txt agrees):
+ * <tt>
+ * ###############################################################################
+ * #Keywd  Symbol    Source   Low   High    N   Crit    Use    Run av  Comment
+ * ###############################################################################
+ * DEFINE, PT,           WS,  -40,   +60,  10,  FALSE,   TRUE,  1    # Temperature
+ * DEFINE, VH,           WS,  0.0,  80.0,  10,   TRUE,   TRUE,  1    # Humidity
+ * DEFINE, TDEW,         WS,  -80,   +20,  10,  FALSE,   TRUE,  1    # Dew point
+ * DEFINE, F1WS,         WS,  0.0,  17.0,  10,   TRUE,   TRUE,  1    # Wind speed
+ * DEFINE, RPWD,         WS,   -2,   360,  10,  FALSE,   TRUE,  1    # Wind direction
+ * DEFINE, VPR,          WS,  500,  1100,  10,  FALSE,   TRUE,  1    # Air pressure
+ * DEFINE, DSWE,         WS,    2,     5,   5,  FALSE,   TRUE,  1    # Surface wetness (dig)
+ * DEFINE, VWE,          WS,    0,    10,   5,   TRUE,   TRUE,  1    # Surface wetness (an)
+ * DEFINE, VPY,          WS,    0,  2000,   10, FALSE,   TRUE,  1    # Light
+ * DEFINE, UIN,          WS,   11,    13,   10, FALSE,   TRUE,  1    # Internal voltage
+ * DEFINE, IR,           WS,  1.1,   1.3,   10, FALSE,   TRUE,  1    # Internal current
+ * DEFINE, TIN,          WS,  -50,   100,   10, FALSE,   TRUE,  1    # Internal temperature
+ * DEFINE, RT,           WS,  -40,    80,   3,   TRUE,   TRUE,  1    # Reference temperature
+ * </tt>
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
  * @param qli_id A character representing which QLI50 to use, this is normally 'A'.
@@ -464,12 +486,16 @@ int Wms_Qli50_Command_Read_Sensors(char *class,char *source,char qli_id,char seq
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
  * @see #CHARACTER_ENQ
+ * @see #CHARACTER_SOH
+ * @see #CHARACTER_STX
+ * @see #CHARACTER_ETX
  * @see #TERMINATOR_CRLF
  */
 int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq_id)
 {
 	char command_string[32];
 	char reply_string[256];
+	char *ch_ptr = NULL;
 	int retval;
 
 	sprintf(command_string,"%c%c%c",CHARACTER_ENQ,qli_id,seq_id);
@@ -477,6 +503,51 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 		return FALSE;
 	/* parse the reply data 
 	** This is in the format: <soh>qli_id seq_id<stx><reading> [,<reading>...]<etx><cr><lf> */
+	if(reply_string[0] != CHARACTER_SOH)
+	{
+		Wms_Qli50_Error_Number = ;
+		sprintf(Wms_Qli50_Error_String,
+			"Wms_Qli50_Command_Send_Results:<soh> not found in reply string '%s' (%d).",
+			reply_string,(int)(reply_string[0]));
+		return FALSE;		
+	}
+	if(reply_string[1] != qli_id)
+	{
+		Wms_Qli50_Error_Number = ;
+		sprintf(Wms_Qli50_Error_String,
+			"Wms_Qli50_Command_Send_Results:Wrong qli_id '%c' (vs '%c') found in reply string '%s'.",
+			reply_string[1],qli_id,reply_string);
+		return FALSE;		
+	}
+	if(reply_string[2] != seq_id)
+	{
+		Wms_Qli50_Error_Number = ;
+		sprintf(Wms_Qli50_Error_String,
+			"Wms_Qli50_Command_Send_Results:Wrong seq_id '%c' (vs '%c') found in reply string '%s'.",
+			reply_string[2],seq_id,reply_string);
+		return FALSE;		
+	}
+	if(reply_string[3] != CHARACTER_STX)
+	{
+		Wms_Qli50_Error_Number = ;
+		sprintf(Wms_Qli50_Error_String,
+			"Wms_Qli50_Command_Send_Results:<stx> not found in reply string '%s' (%d).",
+			reply_string,(int)(reply_string[3]));
+		return FALSE;		
+	}
+	/* reply values start at reply_string+4 */
+	/* find <etx> and terminate string at that position */
+	ch_ptr = strchr(reply_string+4,CHARACTER_ETX);
+	if(ch_ptr == NULL)
+	{
+		Wms_Qli50_Error_Number = ;
+		sprintf(Wms_Qli50_Error_String,
+			"Wms_Qli50_Command_Send_Results:Failed to find <etx> in reply string '%s'.",
+			reply_string);
+		return FALSE;		
+	}
+	(*ch_ptr) = '\0';
+	/* reply_string+4 now contains a series of comma-separated values/error codes */
 	
 	return TRUE;
 }
