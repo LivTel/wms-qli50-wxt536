@@ -28,25 +28,90 @@
 #include "wms_qli50_general.h"
 #include "wms_qli50_server.h"
 
+/* internal data types */
+/**
+ * Data structure holding local data for the server module.
+ * <dl>
+ * <dt>Read_Sensor_Callback</dt> <dd>The callback the server invokes when it receives a 'Read Sensor' request.</dd>
+ * <dt>Send_Result_Callback</dt> <dd>The callback the server invokes when it receives a 'Send Result' request.</dd>
+ * </dl>
+ */
+struct Server_Struct
+{
+	Read_Sensor_Callback_T Read_Sensor_Callback;
+	Send_Result_Callback_T Send_Result_Callback;
+};
+
+/* internal data */
+/**
+ * Revision Control System identifier.
+ */
+static char rcsid[] = "$Id$";
+/**
+ * The instance of the server data used by the server.
+ * @see #Server_Struct
+ */
+static struct Server_Struct Server_Data;
+
 /* ==========================================
 ** external functions 
 ** ========================================== */
-int Wms_Qli50_Server_Set_Read_Sensor_Callback(Read_Sensor_Callback callback)
+/**
+ * Routine to set the callback to be invoked by the server when it receives a 'Read Sensor' request.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param callback A function pointer of type Read_Sensor_Callback_T.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see #Server_Data
+ */
+int Wms_Qli50_Server_Set_Read_Sensor_Callback(char *class,char *source,Read_Sensor_Callback_T callback)
 {
+	Server_Data.Read_Sensor_Callback = callback;
 	return TRUE;
 }
 
-int Wms_Qli50_Server_Set_Send_Result_Callback(Send_Result_Callback callback)
+/**
+ * Routine to set the callback to be invoked by the server when it receives a 'Send Result' request.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param callback A function pointer of type Send_Result_Callback_T.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see #Server_Data
+ */
+int Wms_Qli50_Server_Set_Send_Result_Callback(char *class,char *source,Send_Result_Callback_T callback)
 {
+	Server_Data.Send_Result_Callback = callback;
 	return TRUE;
 }
 
-int Wms_Qli50_Server_Start(char *device_name)
+/**
+ * Routine to start the server. In this case, open the connection to the specified serial device.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_name A string representing the device name of the serial device to open e.g. '/dev/ttyS0'.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see wms_wxt536_connection.html#Wms_Qli50_Serial_Handle
+ * @see wms_wxt536_connection.html#Wms_Qli50_Connection_Open
+ * @see wms_wxt536_general.html#Wms_Qli50_Log
+ * @see wms_wxt536_general.html#Wms_Qli50_Log_Format
+ */
+int Wms_Qli50_Server_Start(char *class,char *source,char *device_name)
 {
+	int retval;
+	
+	retval = Wms_Qli50_Connection_Open(class,source,device_name);
+	if(retval == FALSE)
+		return FALSE;
 	return TRUE;
 }
 
-int Wms_Qli50_Server_Loop(void)
+int Wms_Qli50_Server_Loop(char *class,char *source)
 {
+	int done;
+
+	
 	return TRUE;
 }
