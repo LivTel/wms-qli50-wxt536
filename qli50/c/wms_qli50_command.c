@@ -501,6 +501,12 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	char *ch_ptr = NULL;
 	int retval;
 
+	if(data == NULL)
+	{
+		Wms_Qli50_Error_Number = 122;
+		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Send_Results:data was NULL.");
+		return FALSE;				
+	}
 	sprintf(command_string,"%c%c%c",CHARACTER_ENQ,qli_id,seq_id);
 	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255,TERMINATOR_CRLF))
 		return FALSE;
@@ -551,6 +557,19 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	}
 	(*ch_ptr) = '\0';
 	/* reply_string+4 now contains a series of comma-separated values/error codes */
-	
+	retval = sscanf(reply_string+4,"%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%d,%lf,%lf,%lf,%lf",
+			&(data->Temperature),&(data->Humidity),&(data->Dew_Point),
+			&(data->Wind_Speed),&(data->Wind_Direction),&(data->Air_Pressure),
+			&(data->Digital_Surface_Wet),&(data->Analogue_Surface_Wet),&(data->Light),
+			&(data->Internal_Voltage),&(data->Internal_Current),
+			&(data->Internal_Temperature),&(data->Reference_Temperature));
+	if(retval != 13)
+	{
+		Wms_Qli50_Error_Number = 123;
+		sprintf(Wms_Qli50_Error_String,
+			"Wms_Qli50_Command_Send_Results:Failed to parse reply string '%s' (%d).",
+			reply_string+4,retval);
+		return FALSE;		
+	}
 	return TRUE;
 }
