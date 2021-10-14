@@ -3,6 +3,37 @@
 #ifndef WMS_QLI50_COMMAND_H
 #define WMS_QLI50_COMMAND_H
 
+/* hash defines */
+/**
+ * The terminator used to delimit the end of each line read. <cr> in this case.
+ */
+#define TERMINATOR_CR         ("\r")
+/**
+ * The terminator used to delimit the end of each line read. <cr><lf> in this case.
+ */
+#define TERMINATOR_CRLF         ("\r\n")
+/**
+ * ENQ (Enquiry) control character (Ctrl-E).
+ */
+#define CHARACTER_ENQ         ('\x05')
+/**
+ * ETX (End of text) control character (Ctrl-C).
+ */
+#define CHARACTER_ETX         ('\x03')
+/**
+ * SOH (Start of header) control character (Ctrl-A).
+ */
+#define CHARACTER_SOH         ('\x01')
+/**
+ * STX (Start of text) control character (Ctrl-B).
+ */
+#define CHARACTER_STX         ('\x02')
+/**
+ * SYN (Synchronous idle) control character (Ctrl-V).
+ */
+#define CHARACTER_SYN         ('\x16')
+
+/* structures */
 /**
  * Data structure holding the weather data returned from the QLI50.
  * <dl>

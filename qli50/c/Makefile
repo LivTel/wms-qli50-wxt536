@@ -22,7 +22,7 @@ CFLAGS = -g $(CCHECKFLAG) $(SHARED_LIB_CFLAGS) -I$(INCDIR) -I$(SERIAL_INCDIR) -L
 
 LINTFLAGS = -I$(INCDIR) -I$(SERIAL_INCDIR)
 DOCFLAGS = -static
-SRCS 		= 	wms_qli50_general.c wms_qli50_connection.c wms_qli50_command.c 
+SRCS 		= 	wms_qli50_general.c wms_qli50_connection.c wms_qli50_command.c wms_qli50_server.c 
 HEADERS		=	$(SRCS:%.c=%.h)
 OBJS		=	$(SRCS:%.c=$(BINDIR)/%.o)
 DOCS 		= 	$(SRCS:%.c=$(DOCSDIR)/%.html)
