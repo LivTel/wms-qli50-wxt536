@@ -583,22 +583,6 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 				   &next_element_ptr))
 		return FALSE;		
 	ch_ptr = next_element_ptr;
-	/*
-	retval = sscanf(reply_string+4,"%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%d,%lf,%lf,%lf,%lf",
-			&(data->Temperature),&(data->Humidity),&(data->Dew_Point),
-			&(data->Wind_Speed),&(data->Wind_Direction),&(data->Air_Pressure),
-			&(data->Digital_Surface_Wet),&(data->Analogue_Surface_Wet),&(data->Light),
-			&(data->Internal_Voltage),&(data->Internal_Current),
-			&(data->Internal_Temperature),&(data->Reference_Temperature));
-	if(retval != 13)
-	{
-		Wms_Qli50_Error_Number = 123;
-		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Send_Results:Failed to parse reply string '%s' (%d).",
-			reply_string+4,retval);
-		return FALSE;		
-	}
-	*/
 	return TRUE;
 }
 
@@ -661,7 +645,7 @@ static int Parse_Reply_Data_Value(char *class,char *source,char *ch_ptr,char *na
 		sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:next_element_ptr was NULL for '%s'.",name);
 		return FALSE;		
 	}
-	/* find the comma 
+	/* find the comma, copy data up to the next comma (or end of string) into data_value_string.
 	** set (*next_element_ptr) to either the character following the comma, or the end of string if no commas are found. */
 	end_ptr = strchr(ch_ptr,',');
 	if(end_ptr == NULL) /* no more commas, the end of this value is the end of the string */
@@ -685,7 +669,7 @@ static int Parse_Reply_Data_Value(char *class,char *source,char *ch_ptr,char *na
 	{
 		/* data value is actually an error code, parse this */
 		data_value->Type = DATA_TYPE_ERROR;
-		retval = sscanf(data_value_string,"E0%d",&(data_value->Value.Error_Code));
+		retval = sscanf(data_value_string," E0%d",&(data_value->Value.Error_Code));
 		if(retval != 1)
 		{
 			Wms_Qli50_Error_Number = 130;
@@ -701,12 +685,12 @@ static int Parse_Reply_Data_Value(char *class,char *source,char *ch_ptr,char *na
 		if(data_type == DATA_TYPE_DOUBLE)
 		{
 			data_value->Type = DATA_TYPE_DOUBLE;
-			retval = sscanf(data_value_string,"%lf",&(data_value->Value.DValue));
+			retval = sscanf(data_value_string," %lf",&(data_value->Value.DValue));
 		}
 		else if(data_type == DATA_TYPE_INT)
 		{
 			data_value->Type = DATA_TYPE_INT;
-			retval = sscanf(data_value_string,"%d",&(data_value->Value.IValue));
+			retval = sscanf(data_value_string," %d",&(data_value->Value.IValue));
 		}
 		else
 		{
