@@ -32,6 +32,10 @@
  */
 static char rcsid[] = "$Id$";
 
+/* internal functions */
+static int Parse_Reply_Data_Value(char *class,char *source,char *ch_ptr,char *name,enum Wms_Qli50_Data_Type_Enum data_type,
+				  struct Wms_Qli50_Data_Value *data_value,char **next_element_ptr);
+
 /* ==========================================
 ** external functions 
 ** ========================================== */
@@ -473,7 +477,7 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	char command_string[32];
 	char reply_string[256];
 	char *ch_ptr = NULL;
-	int retval;
+	char *next_element_ptr = NULL;
 
 	if(data == NULL)
 	{
@@ -531,6 +535,55 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	}
 	(*ch_ptr) = '\0';
 	/* reply_string+4 now contains a series of comma-separated values/error codes */
+	ch_ptr = reply_string+4;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Temperature",DATA_TYPE_DOUBLE,&(data->Temperature),&next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Humidity",DATA_TYPE_DOUBLE,&(data->Humidity),&next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Dew Point",DATA_TYPE_DOUBLE,&(data->Dew_Point),&next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Wind Speed",DATA_TYPE_DOUBLE,&(data->Wind_Speed),&next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Wind Direction",DATA_TYPE_INT,&(data->Wind_Direction),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Air Pressure",DATA_TYPE_DOUBLE,&(data->Air_Pressure),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Digital Surface Wet",DATA_TYPE_INT,&(data->Digital_Surface_Wet),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Analogue Surface Wet",DATA_TYPE_INT,&(data->Analogue_Surface_Wet),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Light",DATA_TYPE_DOUBLE,&(data->Light),&next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Internal Voltage",DATA_TYPE_DOUBLE,&(data->Internal_Voltage),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Internal Current",DATA_TYPE_DOUBLE,&(data->Internal_Current),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Internal Temperature",DATA_TYPE_DOUBLE,&(data->Internal_Temperature),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	if(!Parse_Reply_Data_Value(class,source,ch_ptr,"Reference Temperature",DATA_TYPE_DOUBLE,&(data->Reference_Temperature),
+				   &next_element_ptr))
+		return FALSE;		
+	ch_ptr = next_element_ptr;
+	/*
 	retval = sscanf(reply_string+4,"%lf,%lf,%lf,%lf,%lf,%lf,%d,%d,%d,%lf,%lf,%lf,%lf",
 			&(data->Temperature),&(data->Humidity),&(data->Dew_Point),
 			&(data->Wind_Speed),&(data->Wind_Direction),&(data->Air_Pressure),
@@ -544,6 +597,131 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 			"Wms_Qli50_Command_Send_Results:Failed to parse reply string '%s' (%d).",
 			reply_string+4,retval);
 		return FALSE;		
+	}
+	*/
+	return TRUE;
+}
+
+/* ==========================================
+** internal functions 
+** ========================================== */
+/**
+ * Parse the next data value from the comma seperated results string and put the results (parsed as type data_type) 
+ * in data_value. Return a character pointer to the end of the parsed data in next_element_ptr. The data value may be
+ * either an integer or double, or could instead be an error code of the form 'E00NN' if there was an error getting a value
+ * for this parameter.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param ch_ptr Pointer to a character string containing a list of comma separated values, the next of which is to be parsed.
+ * @param name The name of the value value we are trying to parse.
+ * @param data_type Which data type the value is to be parsed as (either  DATA_TYPE_DOUBLE or DATA_TYPE_INT). 
+ * @param data_value The address of a Wms_Qli50_Data_Value struct to hold parsed value in, 
+ *        or error code if the value is an error code.
+ * @param next_element_ptr A pointer to a character pointer, on successful parsing of the data value this pointer is set to
+ * the comma location +1, i.e. the start of the next data value to parse.
+ * @see #Wms_Qli50_Data_Type_Enum
+ * @see #Wms_Qli50_Data_Value
+ */
+static int Parse_Reply_Data_Value(char *class,char *source,char *ch_ptr,char *name,enum Wms_Qli50_Data_Type_Enum data_type,
+				  struct Wms_Qli50_Data_Value *data_value,char **next_element_ptr)
+{
+	char data_value_string[256];
+	char *end_ptr = NULL;
+	char *e_ptr = NULL;
+	int retval;
+	
+	if(name == NULL)
+	{
+		Wms_Qli50_Error_Number = 124;
+		sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:name was NULL.");
+		return FALSE;		
+	}
+	if(ch_ptr == NULL)
+	{
+		Wms_Qli50_Error_Number = 125;
+		sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:ch_ptr was NULL for '%s'.",name);
+		return FALSE;		
+	}
+	if((data_type != DATA_TYPE_DOUBLE)&&(data_type != DATA_TYPE_INT))
+	{
+		Wms_Qli50_Error_Number = 126;
+		sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:data_type was illegal type %d for '%s'.",
+			data_type,name);
+		return FALSE;		
+	}
+	if(data_value == NULL)
+	{
+		Wms_Qli50_Error_Number = 127;
+		sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:data value was NULL for '%s'.",name);
+		return FALSE;		
+	}
+	if(next_element_ptr == NULL)
+	{
+		Wms_Qli50_Error_Number = 128;
+		sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:next_element_ptr was NULL for '%s'.",name);
+		return FALSE;		
+	}
+	/* find the comma 
+	** set (*next_element_ptr) to either the character following the comma, or the end of string if no commas are found. */
+	end_ptr = strchr(ch_ptr,',');
+	if(end_ptr == NULL) /* no more commas, the end of this value is the end of the string */
+	{
+		end_ptr = strchr(ch_ptr,'\0');
+		(*next_element_ptr) = end_ptr;
+	}
+	else
+		(*next_element_ptr) = end_ptr+1;
+	if((end_ptr-ch_ptr) > 255)
+	{
+		Wms_Qli50_Error_Number = 129;
+		sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:The data value string was too long for '%s'.",name);
+		return FALSE;		
+	}
+	strncpy(data_value_string,ch_ptr,(end_ptr-ch_ptr));
+	data_value_string[(end_ptr-ch_ptr)] = '\0';
+	/* check for error code */
+	e_ptr = strchr(data_value_string,'E');
+	if(e_ptr != NULL)
+	{
+		/* data value is actually an error code, parse this */
+		data_value->Type = DATA_TYPE_ERROR;
+		retval = sscanf(data_value_string,"E0%d",&(data_value->Value.Error_Code));
+		if(retval != 1)
+		{
+			Wms_Qli50_Error_Number = 130;
+			sprintf(Wms_Qli50_Error_String,
+				"Parse_Reply_Data_Value:Failed to parse error data value '%s' of data type %d for '%s'.",
+				data_value_string,data_type,name);
+			return FALSE;		
+		}
+	}
+	else
+	{
+		/* data value should be a data value */
+		if(data_type == DATA_TYPE_DOUBLE)
+		{
+			data_value->Type = DATA_TYPE_DOUBLE;
+			retval = sscanf(data_value_string,"%lf",&(data_value->Value.DValue));
+		}
+		else if(data_type == DATA_TYPE_INT)
+		{
+			data_value->Type = DATA_TYPE_INT;
+			retval = sscanf(data_value_string,"%d",&(data_value->Value.IValue));
+		}
+		else
+		{
+			Wms_Qli50_Error_Number = 131;
+			sprintf(Wms_Qli50_Error_String,"Parse_Reply_Data_Value:Illegal data type %d for '%s'.",data_type,name);
+			return FALSE;		
+		}
+		if(retval != 1)
+		{
+			Wms_Qli50_Error_Number = 132;
+			sprintf(Wms_Qli50_Error_String,
+				"Parse_Reply_Data_Value:Failed to parse data value '%s' of data type %d for '%s'.",
+				data_value_string,data_type,name);
+			return FALSE;		
+		}
 	}
 	return TRUE;
 }

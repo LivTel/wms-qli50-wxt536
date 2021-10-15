@@ -33,7 +33,39 @@
  */
 #define CHARACTER_SYN         ('\x16')
 
+/* enum */
+/**
+ * An enumeration describing the data value returned. This is one of:
+ * <ul>
+ * <li>DATA_TYPE_DOUBLE
+ * <li>DATA_TYPE_INT
+ * <li>DATA_TYPE_ERROR
+ * </ul>
+ */
+enum Wms_Qli50_Data_Type_Enum
+{
+	DATA_TYPE_DOUBLE,DATA_TYPE_INT,DATA_TYPE_ERROR
+};
+
 /* structures */
+/**
+ * Structure describing one data value returned from a Send Results command.
+ * <dl>
+ * <dt>Type</dt> <dd>Whether the data value returne was a double, integer, or an error code.</dd>
+ * <dt>Value</dt> <dd>A union containing the result data.</dd>
+ * </dl>
+ * @see #Wms_Qli50_Data_Type_Enum
+ */
+struct Wms_Qli50_Data_Value
+{
+	enum Wms_Qli50_Data_Type_Enum Type;
+	union
+	{
+		double DValue;
+		int IValue;
+		int Error_Code;
+	} Value;
+};
 /**
  * Data structure holding the weather data returned from the QLI50.
  * <dl>
@@ -41,34 +73,36 @@
  * <dt>Humidity</dt> <dd>A double, the relative humidity as a percentage (0..100).</dd>
  * <dt>Dew_Point</dt> <dd>A double in degrees Centigrade.</dd>
  * <dt>Wind_Speed</dt> <dd>A double in metres/second.</dd>
- * <dt>Wind_Direction</dt> <dd>A double(?) in degrees (0 = north?).</dd>
- * <dt>Air_Pressure</dt> <dd>A double in millibars.</dd>
- * <dt>Digital_Surface_Wet</dt> <dd>An integer.</dd>
- * <dt>Analogue_Surface_Wet</dt> <dd>An integer.</dd>
+ * <dt>Wind_Direction</dt> <dd>An integer in degrees (0 = north?).</dd>
+ * <dt>Air_Pressure</dt> <dd>A double in hPa/millibars.</dd>
+ * <dt>Digital_Surface_Wet</dt> <dd>An integer, digital wetness in Volts (0..5).</dd>
+ * <dt>Analogue_Surface_Wet</dt> <dd>An integer, analogue wetness in percent (%) (0..100).</dd>
  * <dt>Light</dt> <dd>An integer in Watts per metre squared.</dd>
  * <dt>Internal_Voltage</dt> <dd>A double in Volts.</dd>
- * <dt>Internal_Current</dt> <dd>A double in Amps.</dd>
+ * <dt>Internal_Current</dt> <dd>A double in milliamps.</dd>
  * <dt>Internal_Temperature</dt> <dd>A double in degrees Centigrade.</dd>
  * <dt>Reference_Temperature</dt> <dd>A double in degrees Centigrade.</dd>
  * <dt></dt> <dd>.</dd>
  * </dl>
+ * @see #Wms_Qli50_Data_Value
  */
 struct Wms_Qli50_Data_Struct
 {
-	double Temperature;
-	double Humidity;
-	double Dew_Point;
-	double Wind_Speed;
-	double Wind_Direction;
-	double Air_Pressure;
-	int Digital_Surface_Wet;
-	int Analogue_Surface_Wet;
-	int Light;
-	double Internal_Voltage;
-	double Internal_Current;
-	double Internal_Temperature;
-	double Reference_Temperature;
+	struct Wms_Qli50_Data_Value Temperature;
+	struct Wms_Qli50_Data_Value Humidity;
+	struct Wms_Qli50_Data_Value Dew_Point;
+	struct Wms_Qli50_Data_Value Wind_Speed;
+	struct Wms_Qli50_Data_Value Wind_Direction;
+	struct Wms_Qli50_Data_Value Air_Pressure;
+	struct Wms_Qli50_Data_Value Digital_Surface_Wet;
+	struct Wms_Qli50_Data_Value Analogue_Surface_Wet;
+	struct Wms_Qli50_Data_Value Light;
+	struct Wms_Qli50_Data_Value Internal_Voltage;
+	struct Wms_Qli50_Data_Value Internal_Current;
+	struct Wms_Qli50_Data_Value Internal_Temperature;
+	struct Wms_Qli50_Data_Value Reference_Temperature;
 };
+
 
 extern int Wms_Qli50_Command(char *class,char *source,char *command_string,
 			     char *reply_string,int reply_string_length,char *reply_terminator);
