@@ -5,11 +5,11 @@
 
 /* hash defines */
 /**
- * The terminator used to delimit the end of each line read. <cr> in this case.
+ * The terminator used to delimit the end of each line read, as a string. &lt;cr&gt; in this case.
  */
 #define TERMINATOR_CR         ("\r")
 /**
- * The terminator used to delimit the end of each line read. <cr><lf> in this case.
+ * The terminator used to delimit the end of each line read, as a string. &lt;cr&gt;&lt;lf&gt; in this case.
  */
 #define TERMINATOR_CRLF         ("\r\n")
 /**
