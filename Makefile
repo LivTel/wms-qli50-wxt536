@@ -1,8 +1,7 @@
 include ../Makefile.common
 include Makefile.common
 
-DIRS 	= serial wxt536
-#qli50
+DIRS 	= serial wxt536 qli50
 
 top:
 	@for i in $(DIRS); \
