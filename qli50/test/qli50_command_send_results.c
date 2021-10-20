@@ -79,9 +79,9 @@ int main(int argc, char *argv[])
 	Wms_Qli50_Set_Log_Handler_Function(Wms_Qli50_Log_Handler_Stdout);
 	Wms_Qli50_Set_Log_Filter_Function(Wms_Qli50_Log_Filter_Level_Absolute);
 	Wms_Qli50_Set_Log_Filter_Level(DEFAULT_LOG_LEVEL);
-	Wms_Qli50_Set_Log_Handler_Function(Wms_Serial_Log_Handler_Stdout);
-	Wms_Qli50_Set_Log_Filter_Function(Wms_Serial_Log_Filter_Level_Absolute);
-	Wms_Qli50_Set_Log_Filter_Level(DEFAULT_LOG_LEVEL);
+	Wms_Serial_Set_Log_Handler_Function(Wms_Serial_Log_Handler_Stdout);
+	Wms_Serial_Set_Log_Filter_Function(Wms_Serial_Log_Filter_Level_Absolute);
+	Wms_Serial_Set_Log_Filter_Level(DEFAULT_LOG_LEVEL);
 	fprintf(stdout,"Parsing Arguments.\n");
 	/* parse arguments */
 	if(!Parse_Arguments(argc,argv))
