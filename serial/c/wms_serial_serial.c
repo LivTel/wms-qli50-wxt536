@@ -19,6 +19,11 @@
 #include "wms_serial_serial.h"
 
 /* hash defines */
+/**
+ * The number of times to attempt a read which returns 0 bytes read, before failing and timing out,
+ * when trying to read a line of data using Wms_Serial_Read_Line.
+ */
+#define READ_LINE_TIMEOUT (10)
 
 /* data types */
 /**
@@ -400,6 +405,8 @@ int Wms_Serial_Read(char *class,char *source,Wms_Serial_Handle_T handle,void *me
 
 /**
  * Routine to read a message from the opened serial link. 
+ * We have setup each individual read to timeout after 1 second, if no data arrives. We loop until we get
+ * a terminator in the received data string, or we timeout after 10 reads attempts with no new data read (i.e. 10s).
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
  * @param handle An instance of Wms_Serial_Handle_T containing connection information to read from.
@@ -409,11 +416,13 @@ int Wms_Serial_Read(char *class,char *source,Wms_Serial_Handle_T handle,void *me
  * @param bytes_read The address of an integer. On return this will be filled with the number of bytes read from
  *        the serial interface. 
  * @return TRUE if succeeded, FALSE otherwise.
+ * @see #READ_LINE_TIMEOUT
+ * @see #Wms_Serial_Handle_T
  */
-int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,char *terminator,char *message,int message_length,
-			  int *bytes_read)
+int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,char *terminator,char *message,
+			 int message_length, int *bytes_read)
 {
-	int read_errno,retval;
+	int read_errno,retval,timeout;
 
 	/* check input parameters */
 	if(message == NULL)
@@ -438,8 +447,13 @@ int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,cha
 	/* initialise bytes_read */
 	(*bytes_read) = 0;
 	message[(*bytes_read)] = '\0';
-	while(strstr(message,terminator) == NULL)
+	timeout = 0;
+	while((strstr(message,terminator) == NULL)&&(timeout < READ_LINE_TIMEOUT))
 	{
+#if LOGGING > 0
+		Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
+				      "Wms_Serial_Read_line:starting read, current length %d bytes.",(*bytes_read));
+#endif /* LOGGING */
 		retval = read(handle.Serial_Fd,message+strlen(message),message_length-strlen(message));
 		if(retval < 0)
 		{
@@ -457,9 +471,24 @@ int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,cha
 		{
 			(*bytes_read) += retval;
 			message[(*bytes_read)] = '\0';
+			if(retval > 0)
+				timeout = 0;
+			else
+				timeout++;
 		}
 	}/* end while */
 	message[(*bytes_read)] = '\0';
+	if(timeout >= READ_LINE_TIMEOUT)
+	{
+		Wms_Serial_Error_Number = 10;
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line: Timed out after %d reads and %d bytes read.",
+			timeout,(*bytes_read));
+		return FALSE;
+	}
+#if LOGGING > 0
+	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,"Wms_Serial_Read_line:read %d bytes.",
+			      (*bytes_read));
+#endif /* LOGGING */
 	return TRUE;
 }
 
