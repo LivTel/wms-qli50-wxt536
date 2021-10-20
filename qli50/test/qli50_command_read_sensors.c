@@ -234,10 +234,10 @@ static void Help(void)
 {
 	fprintf(stdout,"Qli50 Read Sensors:Help.\n");
 	fprintf(stdout,"Qli50 Read Sensors sends an read sensors command to the Qli50.\n");
-	fprintf(stdout,"qli50_command_read_sensors [-serial_device|-se <filename>][-qli_id <id>][-seq_id <id>]\n");
+	fprintf(stdout,"qli50_command_read_sensors [-serial_device|-se <filename>][-qli50_id <id>][-seq_id <id>]\n");
 	fprintf(stdout,"\t[-l[og_level] <number>][-h[elp]]\n");
 	fprintf(stdout,"\n");
-	fprintf(stdout,"\t-qli_id sets the QLI50 Id parameter to the read sensors command - this should be a single letter.\n");
+	fprintf(stdout,"\t-qli50_id sets the QLI50 Id parameter to the read sensors command - this should be a single letter.\n");
 	fprintf(stdout,"\t-seq_id sets the sequence Id parameter to the read sensors command - this should be a single letter.\n");
 	fprintf(stdout,"\t-serial_device specifies the serial device name.\n");
 	fprintf(stdout,"\te.g. /dev/ttyS0 for Linux.\n");

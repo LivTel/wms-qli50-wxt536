@@ -207,10 +207,10 @@ static void Help(void)
 {
 	fprintf(stdout,"Qli50 Open:Help.\n");
 	fprintf(stdout,"Qli50 Open sends an open command to the Qli50.\n");
-	fprintf(stdout,"qli50_command_open [-serial_device|-se <filename>][-qli_id <id>]\n");
+	fprintf(stdout,"qli50_command_open [-serial_device|-se <filename>][-qli50_id <id>]\n");
 	fprintf(stdout,"\t[-l[og_level] <number>][-h[elp]]\n");
 	fprintf(stdout,"\n");
-	fprintf(stdout,"\t-qli_id sets the Id parameter to the open command - this should be a single letter.\n");
+	fprintf(stdout,"\t-qli50_id sets the Id parameter to the open command - this should be a single letter.\n");
 	fprintf(stdout,"\t-serial_device specifies the serial device name.\n");
 	fprintf(stdout,"\te.g. /dev/ttyS0 for Linux.\n");
 	fprintf(stdout,"\t-log_level specifies the logging(0..5).\n");
