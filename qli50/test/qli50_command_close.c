@@ -38,7 +38,6 @@ static void Help(void);
  * @return This function returns 0 if the program succeeds, and a positive integer if it fails.
  * @see #DEFAULT_LOG_LEVEL
  * @see #Serial_Device_Name
- * @see #Device_Address
  * @see #Parse_Arguments
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Set_Log_Handler_Function
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Log_Handler_Stdout
@@ -48,7 +47,7 @@ static void Help(void);
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Error
  * @see ../cdocs/wms_qli50_connection.html#Wms_Qli50_Connection_Open
  * @see ../cdocs/wms_qli50_connection.html#Wms_Qli50_Connection_Close
- * @see ../cdocs/wms_qli50_command.html#Wms_Qli50_Command_Reset
+ * @see ../cdocs/wms_qli50_command.html#Wms_Qli50_Command_Close
  * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Set_Log_Handler_Function
  * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Log_Handler_Stdout
  * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Set_Log_Filter_Function

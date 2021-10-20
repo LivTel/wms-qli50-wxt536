@@ -2,6 +2,10 @@
  */
 #ifndef WMS_QLI50_SERVER_H
 #define WMS_QLI50_SERVER_H
+
+/* include wms_qli50_command.h for Wms_Qli50_Data_Struct declaration */
+#include "wms_qli50_command.h"
+
 /**
  * Typedef for a function pointer to be invoked when a Read Sensor command is received by the server.
  */

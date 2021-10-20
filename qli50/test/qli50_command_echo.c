@@ -43,7 +43,6 @@ static void Help(void);
  * @return This function returns 0 if the program succeeds, and a positive integer if it fails.
  * @see #DEFAULT_LOG_LEVEL
  * @see #Serial_Device_Name
- * @see #Device_Address
  * @see #Parse_Arguments
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Set_Log_Handler_Function
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Log_Handler_Stdout
