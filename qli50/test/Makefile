@@ -18,8 +18,8 @@ CFLAGS = -g $(CCHECKFLAG) $(SHARED_LIB_CFLAGS) -I$(INCDIR) -I$(SERIAL_INCDIR) \
 DOCFLAGS = -static
 SRCS 		=	qli50_command_close.c qli50_command_echo.c qli50_command_open.c qli50_command_par.c \
 			qli50_command_reset.c qli50_command_sta.c \
-#			qli50_command_read_sensors.c qli50_command_send_results.c \
-#			qli50_server_test.c 
+			qli50_command_read_sensors.c qli50_command_send_results.c \
+			qli50_server_test.c 
 OBJS		=	$(SRCS:%.c=$(BINDIR)/%.o)
 EXES		=	$(SRCS:%.c=$(BINDIR)/%)
 DOCS 		= 	$(SRCS:%.c=$(DOCSDIR)/%.html)
