@@ -290,26 +290,30 @@ int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
  * @param reply_string_length The length of the reply_string buffer.
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see wms_qli50_command.html#TERMINATOR_CR
  * @see wms_qli50_general.html#Wms_Qli50_Log
  * @see wms_qli50_general.html#Wms_Qli50_Log_Format
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Fix_Control_Chars
  */
 int Wms_Qli50_Command_Par(char *class,char *source,char *reply_string,int reply_string_length)
 {
 	char command_string[32];
+	char fixed_command_string[32];
 	char message[256];
 	int done = FALSE;
 	int retval,bytes_read;
 
 	
 	strcpy(command_string,"PAR");
-	/* diddly add terminator? */
+	strcat(command_string,TERMINATOR_CR);
 	if(!Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,command_string,strlen(command_string)))
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(command_string,fixed_command_string);
 		Wms_Qli50_Error_Number = 112;
 		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Par:Failed to write command string '%s'.",
-			command_string);
+			fixed_command_string);
 		return FALSE;
 	}
 	/* initialise reply string */
@@ -371,24 +375,29 @@ int Wms_Qli50_Command_Reset(char *class,char *source)
  * @param reply_string_length The length of the reply_string buffer.
  * @return The procedure returns TRUE if successful, and FALSE if it failed 
  *         (Wms_Qli50_Error_Number and Wms_Qli50_Error_String are filled in on failure).
+ * @see wms_qli50_command.html#TERMINATOR_CR
  * @see wms_qli50_general.html#Wms_Qli50_Log
  * @see wms_qli50_general.html#Wms_Qli50_Log_Format
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Fix_Control_Chars
  */
 int Wms_Qli50_Command_Sta(char *class,char *source,char *reply_string,int reply_string_length)
 {
 	char command_string[32];
+	char fixed_command_string[32];
 	char message[256];
 	int done = FALSE;
 	int retval,bytes_read;
 
 	strcpy(command_string,"STA");
+	strcat(command_string,TERMINATOR_CR);
 	if(!Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,command_string,strlen(command_string)))
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(command_string,fixed_command_string);
 		Wms_Qli50_Error_Number = 114;
 		sprintf(Wms_Qli50_Error_String,"Wms_Qli50_Command_Sta:Failed to write command string '%s'.",
-			command_string);
+			fixed_command_string);
 		return FALSE;
 	}
 	/* initialise reply string */
