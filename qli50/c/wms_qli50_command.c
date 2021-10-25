@@ -204,13 +204,13 @@ int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
 	sprintf(command_string,"ECHO %s",onoff_string);
 	if(!Wms_Qli50_Command(class,source,command_string,reply_string,255,TERMINATOR_CR))
 		return FALSE;
-	retval = sscanf(reply_string,"ECHO: %31s",reply_onoff_string);
+	retval = sscanf(reply_string,"ECHO %31s",reply_onoff_string);
 	if(retval != 1)
 	{
 		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 107;
 		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Echo:Unexpected reply string (%s).",fixed_reply_string);
+			"Wms_Qli50_Command_Echo:Unexpected reply string '%s' (%d).",fixed_reply_string,retval);
 		return FALSE;		
 	}
 	if(onoff && (strcmp(reply_onoff_string,"ON") != 0))
