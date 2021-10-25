@@ -323,7 +323,7 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 				if(Server_Data.Sta_Callback != NULL)
 					Server_Data.Sta_Callback(reply_message_string,254);
 				else
-					strcpy(reply_message_string,"PARAMETERS");
+					strcpy(reply_message_string,"STATUS");
 				strcat(reply_message_string,TERMINATOR_CR);
 #if LOGGING > 9
 				Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
