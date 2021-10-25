@@ -256,7 +256,7 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 				if(retval == 1)
 				{
 					/* construct reply */
-					sprintf(reply_message_string,"OPEN %c%s",parameter_char,TERMINATOR_CR);
+					sprintf(reply_message_string,"%c OPENED FOR OPERATOR COMMANDS%s",parameter_char,TERMINATOR_CR);
 #if LOGGING > 9
 					Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
 							     reply_message_string);
