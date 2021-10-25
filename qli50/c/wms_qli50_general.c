@@ -22,6 +22,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
+#include "wms_qli50_command.h" /* for character control codes */
 #include "wms_qli50_general.h"
 
 /* defines */
@@ -29,6 +30,10 @@
  * How long some buffers are when generating logging messages.
  */
 #define LOG_BUFF_LENGTH           (1024)
+/**
+ * The ASCII character code for a capital A.
+ */
+#define CHARACTER_A               (65)
 
 /* data types */
 /**
@@ -86,7 +91,12 @@ static struct General_Struct General_Data =
 	NULL,NULL,0,
 };
 
-/* external functions */
+/* internal functions */
+static void Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string);
+
+/* =======================================================
+** external functions 
+** ======================================================= */
 /**
  * Basic error reporting routine, to stderr.
  * @see #Wms_Qli50_Error_Number
@@ -189,16 +199,20 @@ void Wms_Qli50_Log_Format(char *class,char *source,int level,char *format,...)
 /**
  * Routine to log a message to a defined logging mechanism. If the string or General_Data.Log_Handler are NULL
  * the routine does not log the message. If the General_Data.Log_Filter function pointer is non-NULL, the
- * message is passed to it to determoine whether to log the message.
+ * message is passed to it to determoine whether to log the message. We call Qli50_Log_Fix_Control_Chars to replace
+ * any control characters in the string with a textual equivalent before logging the result.
  * @param class The class that produced this log message.
  * @param source The source that produced this log message.
  * @param level An integer, used to decide whether this particular message has been selected for
  * 	logging or not.
  * @param string The message to log.
  * @see #General_Data
+ * @see #Qli50_Log_Fix_Control_Chars
  */
 void Wms_Qli50_Log(char *class,char *source,int level,char *string)
 {
+	char buff[LOG_BUFF_LENGTH];
+	
 /* If the string is NULL, don't log. */
 	if(string == NULL)
 	{
@@ -223,8 +237,10 @@ void Wms_Qli50_Log(char *class,char *source,int level,char *string)
 			return;
 		}
 	}
+	/* copy string to buff, and replace any control characters with a string representation in buff */
+	Qli50_Log_Fix_Control_Chars(string,buff);
 /* We can log the message */
-	(*General_Data.Log_Handler)(class,source,level,string);
+	(*General_Data.Log_Handler)(class,source,level,buff);
 }
 
 /**
@@ -302,4 +318,81 @@ int Wms_Qli50_Log_Filter_Level_Absolute(char *class,char *source,int level,char 
 int Wms_Qli50_Log_Filter_Level_Bitwise(char *class,char *source,int level,char *string)
 {
 	return ((level & General_Data.Log_Filter_Level) > 0);
+}
+
+/* =======================================================
+** internal functions 
+** ======================================================= */
+/**
+ * Routine to copy input_string to output_string, replacing any control characters in the input string with a text
+ * equivalent.
+ * @param input_string The input string.
+ * @param output_string The out put string, when finished this should be a copy of the input string, with any control characters
+ *        replaced with a textual equivalent.
+ * @see #CHARACTER_SOH
+ * @see #CHARACTER_STX
+ * @see #CHARACTER_ETX
+ * @see #CHARACTER_ENQ
+ * @see #CHARACTER_SYN
+ * @see #CHARACTER_A
+ */
+static void Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string)
+{
+	char ctrl_string[16];
+	int i,output_index;
+
+	if(input_string == NULL)
+		return;
+	if(output_string == NULL)
+		return;
+	output_string[0] = '\0';
+	output_index = 0;
+	for(i=0; i < strlen(input_string); i++)
+	{
+		switch(input_string[i])
+		{
+			case CHARACTER_SOH:
+				strcat(output_string,"<soh>");
+				output_index += 5;
+				break;
+			case CHARACTER_STX:
+				strcat(output_string,"<stx>");
+				output_index += 5;
+				break;
+			case CHARACTER_ETX:
+				strcat(output_string,"<etx>");
+				output_index += 5;
+				break;
+			case CHARACTER_ENQ:
+				strcat(output_string,"<enq>");
+				output_index += 5;
+				break;
+			case '\n':
+				strcat(output_string,"<ln>");
+				output_index += 4;
+				break;
+			case '\r':
+				strcat(output_string,"<cr>");
+				output_index += 4;
+				break;
+			case CHARACTER_SYN:
+				strcat(output_string,"<syn>");
+				output_index += 5;
+				break;
+			default:
+				if(input_string[i] < 32)
+				{
+					sprintf(ctrl_string,"<Ctrl-%c>",(CHARACTER_A-1)+input_string[i]);
+					strcat(output_string,ctrl_string);
+					output_index += strlen(ctrl_string);
+				}
+				else
+				{
+					output_string[output_index] = input_string[i];
+					output_string[output_index+1] = '\0';
+					output_index++;
+				}
+				break;
+		}/* end switch on input_string[i] */
+	}/* end for */
 }
