@@ -143,9 +143,15 @@ int Wms_Qli50_Server_Start(char *class,char *source,char *device_name)
 {
 	int retval;
 	
+#if LOGGING > 1
+	Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Qli50_Server_Start: starting with device name '%s'.",device_name);
+#endif /* LOGGING */
 	retval = Wms_Qli50_Connection_Open(class,source,device_name);
 	if(retval == FALSE)
 		return FALSE;
+#if LOGGING > 1
+	Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Qli50_Server_Start: opened server port to device  '%s'.",device_name);
+#endif /* LOGGING */
 	return TRUE;
 }
 
@@ -164,6 +170,8 @@ int Wms_Qli50_Server_Start(char *class,char *source,char *device_name)
  * @see wms_wxt536_general.html#Wms_Qli50_Log_Format
  * @see wms_wxt536_general.html#Wms_Qli50_Error_Number
  * @see wms_wxt536_general.html#Wms_Qli50_Error_String
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Error_Number
+ * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Error
  * @see ../../serial/cdocs/wms_serial_serial.html#Wms_Serial_Read_Line
  * @see ../../serial/cdocs/wms_serial_serial.html#Wms_Serial_Write
  */
@@ -176,6 +184,9 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 	char parameter_char,qli_id,seq_id;
 	int done,retval,bytes_read;
 
+#if LOGGING > 1
+	Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Qli50_Server_Loop: Start.");
+#endif /* LOGGING */
 	done = FALSE;
 	while(done == FALSE)
 	{
@@ -183,9 +194,20 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 					      command_message_string,255,&bytes_read);
 		if(retval)
 		{
+#if LOGGING > 9
+			Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Read command message string '%s'.",
+					     command_message_string);
+#endif /* LOGGING */
 			if(strstr(command_message_string,"CLOSE") != NULL)
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'CLOSE' command.");
+#endif /* LOGGING */
 				sprintf(reply_message_string,"LINE CLOSED%s",TERMINATOR_CR);
+#if LOGGING > 9
+				Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
+						     reply_message_string);
+#endif /* LOGGING */
 				retval = Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,reply_message_string,
 							  strlen(reply_message_string));
 				if(retval == FALSE)
@@ -195,12 +217,19 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 			}/* end if command was "CLOSE" */
 			else if(strstr(command_message_string,"ECHO") != NULL)
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'ECHO' command.");
+#endif /* LOGGING */
 				/* parse parameter */
 				retval = sscanf(command_message_string,"ECHO %31s",parameter_string);
 				if(retval == 1)
 				{
 					/* construct reply */
 					sprintf(reply_message_string,"ECHO %s%s",parameter_string,TERMINATOR_CR);
+#if LOGGING > 9
+					Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
+							     reply_message_string);
+#endif /* LOGGING */
 					retval = Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,reply_message_string,
 								  strlen(reply_message_string));
 					if(retval == FALSE)
@@ -219,12 +248,19 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 			}/* end if command was "ECHO" */
 			else if(strstr(command_message_string,"OPEN") != NULL)
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'OPEN' command.");
+#endif /* LOGGING */
 				/* parse parameter */
 				retval = sscanf(command_message_string,"OPEN %c",&parameter_char);
 				if(retval == 1)
 				{
 					/* construct reply */
 					sprintf(reply_message_string,"OPEN %c%s",parameter_char,TERMINATOR_CR);
+#if LOGGING > 9
+					Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
+							     reply_message_string);
+#endif /* LOGGING */
 					retval = Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,reply_message_string,
 								  strlen(reply_message_string));
 					if(retval == FALSE)
@@ -243,11 +279,18 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 			}/* end if command was "OPEN" */
 			else if(strstr(command_message_string,"PAR") != NULL)
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'PAR' command.");
+#endif /* LOGGING */
 				if(Server_Data.Par_Callback != NULL)
 					Server_Data.Par_Callback(reply_message_string,254);
 				else
 					strcpy(reply_message_string,"PARAMETERS");
 				strcat(reply_message_string,TERMINATOR_CR);
+#if LOGGING > 9
+				Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
+						     reply_message_string);
+#endif /* LOGGING */
 				retval = Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,reply_message_string,
 							  strlen(reply_message_string));
 				if(retval == FALSE)
@@ -257,7 +300,14 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 			}/* end if command was "PAR" */
 			else if(strstr(command_message_string,"RESET") != NULL)
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'RESET' command.");
+#endif /* LOGGING */
 				sprintf(reply_message_string,"RESET COMMAND%s",TERMINATOR_CR);
+#if LOGGING > 9
+				Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
+						     reply_message_string);
+#endif /* LOGGING */
 				retval = Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,reply_message_string,
 							  strlen(reply_message_string));
 				if(retval == FALSE)
@@ -267,11 +317,18 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 			}/* end if command was "RESET" */
 			else if(strstr(command_message_string,"STA") != NULL)
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'STA' command.");
+#endif /* LOGGING */
 				if(Server_Data.Sta_Callback != NULL)
 					Server_Data.Sta_Callback(reply_message_string,254);
 				else
 					strcpy(reply_message_string,"PARAMETERS");
 				strcat(reply_message_string,TERMINATOR_CR);
+#if LOGGING > 9
+				Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
+						     reply_message_string);
+#endif /* LOGGING */
 				retval = Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,reply_message_string,
 							  strlen(reply_message_string));
 				if(retval == FALSE)
@@ -279,8 +336,11 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 					Wms_Serial_Error();
 				}
 			}/* end if command was "STA" */
-			else if(command_message_string[0] = CHARACTER_SYN) /* Read Sensors */
+			else if(command_message_string[0] == CHARACTER_SYN) /* Read Sensors */
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'Read Sensors' command.");
+#endif /* LOGGING */
 				retval = sscanf(command_message_string,"%c%c%c",&parameter_char,&qli_id,&seq_id);
 				if(retval != 3)
 				{
@@ -294,8 +354,11 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 					Server_Data.Read_Sensor_Callback(qli_id,seq_id);
 				/* there is no reply to a <syn> / read sensors command */
 			}/* end if command was <syn> / read sensors */
-			else if(command_message_string[0] = CHARACTER_ENQ) /* Send Results */
+			else if(command_message_string[0] == CHARACTER_ENQ) /* Send Results */
 			{
+#if LOGGING > 9
+				Wms_Qli50_Log(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Detected 'Send Results' command.");
+#endif /* LOGGING */
 				retval = sscanf(command_message_string,"%c%c%c",&parameter_char,&qli_id,&seq_id);
 				if(retval != 3)
 				{
@@ -340,6 +403,10 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 				}
 				if(Server_Create_Send_Result_String(qli_id,seq_id,data,reply_message_string,254))
 				{
+#if LOGGING > 9
+					Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERBOSE,"Wms_Qli50_Server_Loop: Reply String is '%s'.",
+							     reply_message_string);
+#endif /* LOGGING */
 					retval = Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,reply_message_string,
 								  strlen(reply_message_string));
 					if(retval == FALSE)
@@ -362,9 +429,14 @@ int Wms_Qli50_Server_Loop(char *class,char *source)
 		}/* end if command was read successfully */
 		else
 		{
-			Wms_Serial_Error();
+			/* don't print out read-line timeouts - this just means nothing was received for 10 seconds */
+			if(Wms_Serial_Error_Number != 10)
+				Wms_Serial_Error();
 		}
 	}/* end while */
+#if LOGGING > 1
+	Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Qli50_Server_Loop: Finished.");
+#endif /* LOGGING */
 	return TRUE;
 }
 

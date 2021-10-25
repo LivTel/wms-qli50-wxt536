@@ -444,13 +444,16 @@ int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,cha
 		sprintf(Wms_Serial_Error_String,"Wms_Serial_Read_Line:bytes_read was NULL.");
 		return FALSE;
 	}
+#if LOGGING > 5
+	Wms_Serial_Log(class,source,LOG_VERBOSITY_VERY_VERBOSE,"Wms_Serial_Read_line:starting.");
+#endif /* LOGGING */
 	/* initialise bytes_read */
 	(*bytes_read) = 0;
 	message[(*bytes_read)] = '\0';
 	timeout = 0;
 	while((strstr(message,terminator) == NULL)&&(timeout < READ_LINE_TIMEOUT))
 	{
-#if LOGGING > 0
+#if LOGGING > 10
 		Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
 				      "Wms_Serial_Read_line:starting read, current length %d bytes.",(*bytes_read));
 #endif /* LOGGING */
@@ -486,8 +489,7 @@ int Wms_Serial_Read_Line(char *class,char *source,Wms_Serial_Handle_T handle,cha
 		return FALSE;
 	}
 #if LOGGING > 0
-	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,"Wms_Serial_Read_line:read %d bytes.",
-			      (*bytes_read));
+	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,"Wms_Serial_Read_line:read %d bytes.",(*bytes_read));
 #endif /* LOGGING */
 	return TRUE;
 }

@@ -88,6 +88,10 @@ int Wms_Qli50_Command(char *class,char *source,char *command_string,
 #endif /* LOGGING */
 	strcpy(message,command_string);
 	strcat(message,TERMINATOR_CR);
+#if LOGGING > 9
+	Wms_Qli50_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,"Wms_Qli50_Command(%s): Writing '%s' to serial handle.",
+			     command_string,message);
+#endif /* LOGGING */
 	if(!Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,message,strlen(message)))
 	{
 		Wms_Qli50_Error_Number = 102;
