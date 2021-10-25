@@ -47,6 +47,7 @@ extern void Wms_Qli50_Log_Handler_Stdout(char *class,char *source,int level,char
 extern void Wms_Qli50_Set_Log_Filter_Level(int level);
 extern int Wms_Qli50_Log_Filter_Level_Absolute(char *class,char *source,int level,char *string);
 extern int Wms_Qli50_Log_Filter_Level_Bitwise(char *class,char *source,int level,char *string);
+extern void Wms_Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string);
 
 /* external variables */
 extern int Wms_Qli50_Error_Number;

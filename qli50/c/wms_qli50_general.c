@@ -92,7 +92,7 @@ static struct General_Struct General_Data =
 };
 
 /* internal functions */
-static void Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string);
+extern void Wms_Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string);
 
 /* =======================================================
 ** external functions 
@@ -199,7 +199,7 @@ void Wms_Qli50_Log_Format(char *class,char *source,int level,char *format,...)
 /**
  * Routine to log a message to a defined logging mechanism. If the string or General_Data.Log_Handler are NULL
  * the routine does not log the message. If the General_Data.Log_Filter function pointer is non-NULL, the
- * message is passed to it to determoine whether to log the message. We call Qli50_Log_Fix_Control_Chars to replace
+ * message is passed to it to determoine whether to log the message. We call Wms_Qli50_Log_Fix_Control_Chars to replace
  * any control characters in the string with a textual equivalent before logging the result.
  * @param class The class that produced this log message.
  * @param source The source that produced this log message.
@@ -207,7 +207,7 @@ void Wms_Qli50_Log_Format(char *class,char *source,int level,char *format,...)
  * 	logging or not.
  * @param string The message to log.
  * @see #General_Data
- * @see #Qli50_Log_Fix_Control_Chars
+ * @see #Wms_Qli50_Log_Fix_Control_Chars
  */
 void Wms_Qli50_Log(char *class,char *source,int level,char *string)
 {
@@ -238,7 +238,7 @@ void Wms_Qli50_Log(char *class,char *source,int level,char *string)
 		}
 	}
 	/* copy string to buff, and replace any control characters with a string representation in buff */
-	Qli50_Log_Fix_Control_Chars(string,buff);
+	Wms_Qli50_Log_Fix_Control_Chars(string,buff);
 /* We can log the message */
 	(*General_Data.Log_Handler)(class,source,level,buff);
 }
@@ -320,9 +320,6 @@ int Wms_Qli50_Log_Filter_Level_Bitwise(char *class,char *source,int level,char *
 	return ((level & General_Data.Log_Filter_Level) > 0);
 }
 
-/* =======================================================
-** internal functions 
-** ======================================================= */
 /**
  * Routine to copy input_string to output_string, replacing any control characters in the input string with a text
  * equivalent.
@@ -336,7 +333,7 @@ int Wms_Qli50_Log_Filter_Level_Bitwise(char *class,char *source,int level,char *
  * @see #CHARACTER_SYN
  * @see #CHARACTER_A
  */
-static void Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string)
+void Wms_Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string)
 {
 	char ctrl_string[16];
 	int i,output_index;
@@ -396,3 +393,6 @@ static void Qli50_Log_Fix_Control_Chars(char *input_string,char *output_string)
 		}/* end switch on input_string[i] */
 	}/* end for */
 }
+/* =======================================================
+** internal functions 
+** ======================================================= */

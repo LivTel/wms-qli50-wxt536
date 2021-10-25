@@ -146,19 +146,22 @@ int Wms_Qli50_Command(char *class,char *source,char *command_string,
  * @see wms_qli50_general.html#Wms_Qli50_Log_Format
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Fix_Control_Chars
  */
 int Wms_Qli50_Command_Close(char *class,char *source)
 {
 	char reply_string[256];
+	char fixed_reply_string[256];
 
 	if(!Wms_Qli50_Command(class,source,"CLOSE",reply_string,255,TERMINATOR_CR))
 		return FALSE;
 	/* think about cr removal */
 	if(strncmp(reply_string,"LINE CLOSED",strlen("LINE CLOSED")) != 0)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 105;
 		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Close:Unexpected reply string (%s).",reply_string);
+			"Wms_Qli50_Command_Close:Unexpected reply string (%s).",fixed_reply_string);
 		return FALSE;		
 	}
 	return TRUE;
@@ -176,12 +179,14 @@ int Wms_Qli50_Command_Close(char *class,char *source)
  * @see wms_qli50_general.html#Wms_Qli50_Log_Format
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Fix_Control_Chars
  */
 int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
 {
 	char onoff_string[32];
 	char command_string[32];
 	char reply_string[256];
+	char fixed_reply_string[256];
 	char reply_onoff_string[32];
 	int retval;
 
@@ -202,24 +207,27 @@ int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
 	retval = sscanf(reply_string,"ECHO: %31s",reply_onoff_string);
 	if(retval != 1)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 107;
 		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Echo:Unexpected reply string (%s).",reply_string);
+			"Wms_Qli50_Command_Echo:Unexpected reply string (%s).",fixed_reply_string);
 		return FALSE;		
 	}
 	if(onoff && (strcmp(reply_onoff_string,"ON") != 0))
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 108;
 		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Echo:Echo ON: Unexpected reply string (%s,%s).",reply_string,
+			"Wms_Qli50_Command_Echo:Echo ON: Unexpected reply string (%s,%s).",fixed_reply_string,
 			reply_onoff_string);
 		return FALSE;		
 	}
 	else if((onoff == FALSE) && (strcmp(reply_onoff_string,"OFF") != 0))
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 109;
 		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Echo:Echo OFF: Unexpected reply string (%s,%s).",reply_string,
+			"Wms_Qli50_Command_Echo:Echo OFF: Unexpected reply string (%s,%s).",fixed_reply_string,
 			reply_onoff_string);
 		return FALSE;		
 	}
@@ -238,11 +246,13 @@ int Wms_Qli50_Command_Echo(char *class,char *source,int onoff)
  * @see wms_qli50_general.html#Wms_Qli50_Log_Format
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Fix_Control_Chars
  */
 int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
 {
 	char command_string[32];
 	char reply_string[256];
+	char fixed_reply_string[256];
 	char reply_qli_id;
 	int retval;
 
@@ -252,16 +262,18 @@ int Wms_Qli50_Command_Open(char *class,char *source,char qli_id)
 	retval = sscanf(reply_string,"%c OPENED FOR OPERATOR COMMANDS",&reply_qli_id);
 	if(retval != 1)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 110;
 		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Open:Unexpected reply string (%s).",reply_string);
+			"Wms_Qli50_Command_Open:Unexpected reply string (%s).",fixed_reply_string);
 		return FALSE;		
 	}
 	if(qli_id != reply_qli_id)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 111;
 		sprintf(Wms_Qli50_Error_String,
-			"Wms_Qli50_Command_Open: Unexpected reply string (%s,%c,%c).",reply_string,qli_id,
+			"Wms_Qli50_Command_Open: Unexpected reply string (%s,%c,%c).",fixed_reply_string,qli_id,
 			reply_qli_id);
 		return FALSE;		
 	}
@@ -292,6 +304,7 @@ int Wms_Qli50_Command_Par(char *class,char *source,char *reply_string,int reply_
 
 	
 	strcpy(command_string,"PAR");
+	/* diddly add terminator? */
 	if(!Wms_Serial_Write(class,source,Wms_Qli50_Serial_Handle,command_string,strlen(command_string)))
 	{
 		Wms_Qli50_Error_Number = 112;
@@ -475,11 +488,13 @@ int Wms_Qli50_Command_Read_Sensors(char *class,char *source,char qli_id,char seq
  * @see wms_qli50_general.html#Wms_Qli50_Log_Format
  * @see wms_qli50_general.html#Wms_Qli50_Error_Number
  * @see wms_qli50_general.html#Wms_Qli50_Error_String
+ * @see wms_qli50_general.html#Wms_Qli50_Log_Fix_Control_Chars
  */
 int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq_id,struct Wms_Qli50_Data_Struct *data)
 {
 	char command_string[32];
 	char reply_string[256];
+	char fixed_reply_string[256];
 	char *ch_ptr = NULL;
 	char *next_element_ptr = NULL;
 
@@ -496,34 +511,38 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	** This is in the format: <soh>qli_id seq_id<stx><reading> [,<reading>...]<etx><cr><lf> */
 	if(reply_string[0] != CHARACTER_SOH)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 117;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:<soh> not found in reply string '%s' (%d).",
-			reply_string,(int)(reply_string[0]));
+			fixed_reply_string,(int)(reply_string[0]));
 		return FALSE;		
 	}
 	if(reply_string[1] != qli_id)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 118;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:Wrong qli_id '%c' (vs '%c') found in reply string '%s'.",
-			reply_string[1],qli_id,reply_string);
+			reply_string[1],qli_id,fixed_reply_string);
 		return FALSE;		
 	}
 	if(reply_string[2] != seq_id)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 119;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:Wrong seq_id '%c' (vs '%c') found in reply string '%s'.",
-			reply_string[2],seq_id,reply_string);
+			reply_string[2],seq_id,fixed_reply_string);
 		return FALSE;		
 	}
 	if(reply_string[3] != CHARACTER_STX)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 120;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:<stx> not found in reply string '%s' (%d).",
-			reply_string,(int)(reply_string[3]));
+			fixed_reply_string,(int)(reply_string[3]));
 		return FALSE;		
 	}
 	/* reply values start at reply_string+4 */
@@ -531,10 +550,11 @@ int Wms_Qli50_Command_Send_Results(char *class,char *source,char qli_id,char seq
 	ch_ptr = strchr(reply_string+4,CHARACTER_ETX);
 	if(ch_ptr == NULL)
 	{
+		Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
 		Wms_Qli50_Error_Number = 121;
 		sprintf(Wms_Qli50_Error_String,
 			"Wms_Qli50_Command_Send_Results:Failed to find <etx> in reply string '%s'.",
-			reply_string);
+			fixed_reply_string);
 		return FALSE;		
 	}
 	(*ch_ptr) = '\0';
