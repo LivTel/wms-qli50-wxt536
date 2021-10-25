@@ -483,6 +483,8 @@ static int Server_Create_Send_Result_String(char qli_id,char seq_id,struct Wms_Q
 	message_string[1] = qli_id;
 	message_string[2] = seq_id;
 	message_string[3] = CHARACTER_STX;
+	/* NULL terminate header as Server_Add_Result_To_String concatenates to the end of the string. */
+	message_string[4] = '\0';
 	if(!Server_Add_Result_To_String("Temperature",data.Temperature,TRUE,message_string,message_string_length))
 		return FALSE;
 	if(!Server_Add_Result_To_String("Humidity",data.Humidity,TRUE,message_string,message_string_length))
