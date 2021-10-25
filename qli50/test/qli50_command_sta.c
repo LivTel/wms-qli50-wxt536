@@ -47,6 +47,7 @@ static void Help(void);
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Log_Filter_Level_Absolute
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Set_Log_Filter_Level
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Error
+ * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Log_Fix_Control_Chars
  * @see ../cdocs/wms_qli50_connection.html#Wms_Qli50_Connection_Open
  * @see ../cdocs/wms_qli50_connection.html#Wms_Qli50_Connection_Close
  * @see ../cdocs/wms_qli50_command.html#Wms_Qli50_Command_Sta
@@ -61,6 +62,7 @@ static void Help(void);
 int main(int argc, char *argv[])
 {
 	char reply_string[256];
+	char fixed_reply_string[256];
 	
 	fprintf(stdout,"Qli50 Sta\n");
 	/* initialise logging */
@@ -96,7 +98,8 @@ int main(int argc, char *argv[])
 			Wms_Serial_Error();
 		return 4;
 	}
-	fprintf(stdout,"STA returned %s.\n",reply_string);
+	Wms_Qli50_Log_Fix_Control_Chars(reply_string,fixed_reply_string);
+	fprintf(stdout,"STA returned %s.\n",fixed_reply_string);
 	/* close interface */
 	if(!Wms_Qli50_Connection_Close("Qli50 Sta","qli50_command_sta.c"))
 	{
