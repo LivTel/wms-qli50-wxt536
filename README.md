@@ -7,3 +7,17 @@ Therefore this software is designed to look like a Vaisala QLI50 at the front en
 The serial directory contains a low-level serial library (libwms-qli50-wxt536_serial.so) that is used by the higher level libraries.
 
 The wxt536 directory contains the code and test programs for the library that handles communication with the Vaisala Wxt536 (libwms-qli50-wxt536_wxt536.so).
+
+The qli50 directory contains code for a server that waits for commands on a open serial port, and either returns a fake reply or invokes a callback to create a reply. It also has a client-side implementation of the command set (subset supported by the LT Wms) and test progrems.
+
+The c and include directories contain the software for the main program. This instantiates a Qli50 server on a serial port, and when asked for weather data uses the wxt536 command set to retrieve and return it.
+
+## Dependencies
+
+The repo is configured to sit in an LT standard /home/dev/ environment. It uses the following LT packages:
+
+- log_udp
+- commandserver
+- estar/config
+
+

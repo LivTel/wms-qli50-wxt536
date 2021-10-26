@@ -11,3 +11,9 @@ LOG_UDP_CFLAGS		     	= -I$(LOG_UDP_SRC_HOME)/include
 # commandserver
 COMMANDSERVER_HOME		= 	commandserver
 COMMANDSERVER_SRC_HOME		= 	$(LT_SRC_HOME)/$(COMMANDSERVER_HOME)
+
+# config (estar_config)
+CONFIG_HOME			=	config
+CONFIG_SRC_HOME			=	$(LT_SRC_HOME)/estar/$(CONFIG_HOME)
+CONFIG_CFLAGS			=	-I$(CONFIG_SRC_HOME)/include
+CONFIG_LDFLAGS			=	-L$(LT_BIN_HOME)/estar/lib/$(HOSTTYPE) -lestar_config
