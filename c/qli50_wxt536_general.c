@@ -1,6 +1,6 @@
 /* qli50_wxt536_general.c
 ** Weather monitoring system (qli50 -> wxt536 conversion), general routines.
- */
+*/
 /**
  * Error and Log handlers.
  * @author Chris Mottram
@@ -48,7 +48,6 @@
  * @see #Qli50_Wxt536_Log
  * @see #Qli50_Wxt536_Log_Filter_Level_Set
  * @see #Qli50_Wxt536_Log_Filter_Level_Absolute
- * @see #Qli50_Wxt536_Log_Filter_Level_Bitwise
  */
 struct General_Struct
 {
@@ -283,7 +282,7 @@ void Qli50_Wxt536_Log(char *class,char *source,int level,char *string)
  * @see #General_Data
  * @see #Wms_Serial_Log
  */
-void Qli50_Wxt536_Set_Log_Handler_Function(void (*log_fn)(char *class,char *source,int level,char *string))
+void Qli50_Wxt536_Log_Handler_Function_Set(void (*log_fn)(char *class,char *source,int level,char *string))
 {
 	General_Data.Log_Handler = log_fn;
 }
@@ -294,7 +293,7 @@ void Qli50_Wxt536_Set_Log_Handler_Function(void (*log_fn)(char *class,char *sour
  * @see #General_Data
  * @see #Qli50_Wxt536_Log
  */
-void Qli50_Wxt536_Set_Log_Filter_Function(int (*filter_fn)(char *class,char *source,int level,char *string))
+void Qli50_Wxt536_Log_Filter_Function_Set(int (*filter_fn)(char *class,char *source,int level,char *string))
 {
 	General_Data.Log_Filter = filter_fn;
 }
