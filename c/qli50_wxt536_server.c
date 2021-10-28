@@ -55,6 +55,8 @@ static void Server_Sta_Callback(char *return_string,int return_string_length);
 /**
  * Read the serial device filename from config, and then setup a connection to it. Also setup the server callbacks.
  * The configuration file must have previously been read, before calling this routine.
+ * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
+ *         Qli50_Wxt536_Error_String will be set with a suitable error.
  * @see #FILENAME_LENGTH
  * @see #Serial_Device_Filename
  * @see #Server_Read_Sensor_Callback

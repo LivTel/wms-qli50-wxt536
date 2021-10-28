@@ -29,7 +29,8 @@ LDFLAGS = -L$(LT_LIB_HOME) $(SERIAL_LDFLAGS) $(QLI50_LDFLAGS) $(WXT536_LDFLAGS) 
 
 DOCFLAGS = -static
 EXE		= qli50-wxt536
-SRCS 		= qli50_wxt536_main.c qli50_wxt536_general.c qli50_wxt536_config.c qli50_wxt536_server.c
+SRCS 		= qli50_wxt536_main.c qli50_wxt536_general.c qli50_wxt536_config.c qli50_wxt536_server.c \
+		  qli50_wxt536_wxt536.c
 OBJS		=	$(SRCS:%.c=$(BINDIR)/%.o)
 DOCS 		= 	$(SRCS:%.c=$(DOCSDIR)/%.html)
 

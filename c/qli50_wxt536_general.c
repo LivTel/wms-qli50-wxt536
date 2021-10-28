@@ -184,7 +184,7 @@ int Qli50_Wxt536_Error_Number_Get(void)
 
 /**
  * Routine to get the current time in a string. The string is returned in the format
- * '01/01/2000 13:59:59', or the string "Unknown time" if the routine failed.
+ * '2000-12-31T13:59:59', or the string "Unknown time" if the routine failed.
  * The time is in UTC.
  * @param time_string The string to fill with the current time.
  * @param string_length The length of the buffer passed in. It is recommended the length is at least 20 characters.
@@ -197,7 +197,8 @@ void Qli50_Wxt536_Current_Time_String_Get(char *time_string,int string_length)
 	if(time(&current_time) > -1)
 	{
 		utc_time = gmtime(&current_time);
-		strftime(time_string,string_length,"%d/%m/%Y %H:%M:%S",utc_time);
+		/*strftime(time_string,string_length,"%d/%m/%Y %H:%M:%S",utc_time);*/
+		strftime(time_string,string_length,"%Y-%m-%dT%H:%M:%S",utc_time);
 	}
 	else
 		strncpy(time_string,"Unknown time",string_length);
@@ -300,17 +301,23 @@ void Qli50_Wxt536_Log_Filter_Function_Set(int (*filter_fn)(char *class,char *sou
 
 /**
  * A log handler to be used for the General_Data.Log_Handler function.
- * Just prints the message to stdout, terminated by a newline.
+ * This creates a timestamp using Qli50_Wxt536_Current_Time_String_Get, and then prints a string of the form:
+ * "<timestamp> : <class> : <source> : <string>\n"
  * @param class The class that produced this log message.
  * @param source The source that produced this log message.
  * @param level The log level for this message.
  * @param string The log message to be logged. 
+ * @see #Qli50_Wxt536_Current_Time_String_Get
  */
 void Qli50_Wxt536_Log_Handler_Stdout(char *class,char *source,int level,char *string)
 {
+	char timestring[32];
+	
+	/* put timestamp in buff */
+	Qli50_Wxt536_Current_Time_String_Get(timestring,31);
 	if(string == NULL)
 		return;
-	fprintf(stdout,"%s : %s : %s\n",class,source,string);
+	fprintf(stdout,"%s : %s : %s : %s\n",timestring,class,source,string);
 }
 
 /**

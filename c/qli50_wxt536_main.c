@@ -13,6 +13,7 @@
 #include "qli50_wxt536_config.h"
 #include "qli50_wxt536_general.h"
 #include "qli50_wxt536_server.h"
+#include "qli50_wxt536_wxt536.h"
 
 /* internal variables */
 /**
@@ -40,6 +41,7 @@ static void Help(void);
  * <li>We call Qli50_Wxt536_Config_Load to load the config file.
  * <li>We call Qli50_Wxt536_Logging_Initialise to initialise logging.
  * <li>We call Qli50_Wxt536_Server_Initialise to configure the Qli50 server and open the Qli50 serial line.
+ * <li>We call Qli50_Wxt536_Wxt536_Initialise to open a connection to the Vaisala Wxt536 weather station.
  * <li>We call Qli50_Wxt536_Server_Start to start waiting on the Qli50 serial line for Qli50 commands.
  * </ul>
  * @param argc The number of arguments to the program.
@@ -51,6 +53,7 @@ static void Help(void);
  * @see qli50_wxt536_config.html#Qli50_Wxt536_Config_Load
  * @see qli50_wxt536_server.html#Qli50_Wxt536_Server_Initialise
  * @see qli50_wxt536_server.html#Qli50_Wxt536_Server_Start
+ * @see qli50_wxt536_wxt536.html#Qli50_Wxt536_Wxt536_Initialise
  */
 int main(int argc, char *argv[])
 {
@@ -68,6 +71,11 @@ int main(int argc, char *argv[])
 		return 3;
 	}
 	if(!Qli50_Wxt536_Server_Initialise())
+	{
+		Qli50_Wxt536_Error();
+		return 4;
+	}
+	if(!Qli50_Wxt536_Wxt536_Initialise())
 	{
 		Qli50_Wxt536_Error();
 		return 4;
