@@ -202,6 +202,7 @@ void Qli50_Wxt536_Current_Time_String_Get(char *time_string,int string_length)
 	}
 	else
 		strncpy(time_string,"Unknown time",string_length);
+	/* diddly add milliseconds to this string */
 }
 
 /**

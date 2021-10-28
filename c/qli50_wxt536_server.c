@@ -23,6 +23,7 @@
 #include "qli50_wxt536_config.h"
 #include "qli50_wxt536_general.h"
 #include "qli50_wxt536_server.h"
+#include "qli50_wxt536_wxt536.h"
 #include "wms_qli50_connection.h"
 #include "wms_qli50_server.h"
 #include "log_udp.h"
@@ -76,6 +77,7 @@ int Qli50_Wxt536_Server_Initialise(void)
 {
 	int retval;
 
+	Qli50_Wxt536_Error_Number = 0;
 	/* get the serial device filename from config */
 	if(!Qli50_Wxt536_Config_String_Get("qli50.serial_device.name",Serial_Device_Filename,FILENAME_LENGTH))
 		return FALSE;
@@ -135,6 +137,7 @@ int Qli50_Wxt536_Server_Start(void)
 {
 	int retval;
 	
+	Qli50_Wxt536_Error_Number = 0;
 	retval = Wms_Qli50_Server_Loop("Server","qli50_wxt536_server.c");
 	if(retval == FALSE)
 	{
@@ -150,18 +153,25 @@ int Qli50_Wxt536_Server_Start(void)
 ** ======================================================= */
 /**
  * This routine should get called by the server loop when a 'Read Sensor' command is read from the server's serial
- * link.
+ * link. We call Qli50_Wxt536_Wxt536_Read_Sensors to tell the Wxt536 weather station to read it's sensors.
  * @param qli_id A single character, representing the QLI Id of the Qli50 that is required to read it's sensors.
  * @param seq_id A single character, representing the QLI50 sequence id of the set of readings 
  *        the QLI50 is meant to take.
+ * @see qli50_wxt536_wxt536.html#Qli50_Wxt536_Wxt536_Read_Sensors
+ * @see qli50_wxt536_general.html#Qli50_Wxt536_Error
  */
 static void Server_Read_Sensor_Callback(char qli_id,char seq_id)
 {
+	Qli50_Wxt536_Error_Number = 0;
 #if LOGGING > 1
 	Qli50_Wxt536_Log_Format("Server","qli50_wxt536_server.c",LOG_VERBOSITY_TERSE,
 				"Server_Read_Sensor_Callback invoked with qli_id '%c' and seq_id '%c'.",
 				qli_id,seq_id);
 #endif /* LOGGING */
+	if(!Qli50_Wxt536_Wxt536_Read_Sensors(qli_id,seq_id))
+	{
+		Qli50_Wxt536_Error();
+	}
 }
 
 /**
@@ -175,6 +185,7 @@ static void Server_Read_Sensor_Callback(char qli_id,char seq_id)
  */
 static void Server_Send_Result_Callback(char qli_id,char seq_id,struct Wms_Qli50_Data_Struct *data)
 {
+	Qli50_Wxt536_Error_Number = 0;
 #if LOGGING > 1
 	Qli50_Wxt536_Log_Format("Server","qli50_wxt536_server.c",LOG_VERBOSITY_TERSE,
 				"Server_Send_Result_Callback invoked with qli_id '%c' and seq_id '%c'.",
@@ -218,6 +229,7 @@ static void Server_Send_Result_Callback(char qli_id,char seq_id,struct Wms_Qli50
  */
 static void Server_Par_Callback(char *return_parameter_string,int return_parameter_string_length)
 {
+	Qli50_Wxt536_Error_Number = 0;
 #if LOGGING > 1
 	Qli50_Wxt536_Log_Format("Server","qli50_wxt536_server.c",LOG_VERBOSITY_TERSE,"Server_Par_Callback invoked.");
 #endif /* LOGGING */
@@ -234,6 +246,7 @@ static void Server_Par_Callback(char *return_parameter_string,int return_paramet
  */
 static void Server_Sta_Callback(char *return_string,int return_string_length)
 {
+	Qli50_Wxt536_Error_Number = 0;
 #if LOGGING > 1
 	Qli50_Wxt536_Log_Format("Server","qli50_wxt536_server.c",LOG_VERBOSITY_TERSE,"Server_Sta_Callback invoked.");
 #endif /* LOGGING */
