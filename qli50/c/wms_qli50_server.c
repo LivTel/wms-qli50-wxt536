@@ -522,6 +522,7 @@ static int Server_Create_Send_Result_String(char qli_id,char seq_id,struct Wms_Q
 		return FALSE;
 	}
 	message_string[current_message_string_length] = CHARACTER_ETX;
+	message_string[current_message_string_length+1] = '\0'; /* terminate string before using strcat */
 	strcat(message_string,TERMINATOR_CRLF);
 	return TRUE;
 }
@@ -561,7 +562,7 @@ static int Server_Add_Result_To_String(char *name,struct Wms_Qli50_Data_Value da
 		return FALSE;
 	}
 	if(data_value.Type == DATA_TYPE_DOUBLE)
-		sprintf(data_value_string,"%.2lf",data_value.Value.DValue);
+		sprintf(data_value_string,"%.2f",data_value.Value.DValue);
 	else if(data_value.Type == DATA_TYPE_INT)
 		sprintf(data_value_string,"%d",data_value.Value.IValue);
 	else if(data_value.Type == DATA_TYPE_ERROR)
