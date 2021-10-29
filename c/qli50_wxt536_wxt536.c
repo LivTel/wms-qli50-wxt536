@@ -211,73 +211,73 @@ int Qli50_Wxt536_Wxt536_Close(void)
  */
 int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 {
+	struct Wxt536_Command_Wind_Data_Struct wind_data;
+	struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct pressure_temp_humidity_data;
+	struct Wxt536_Command_Precipitation_Data_Struct rain_data;
+	struct Wxt536_Command_Supervisor_Data_Struct supervisor_data;
+	struct Wxt536_Command_Analogue_Data_Struct analogue_data;
 	int retval;
 
 	retval = TRUE;
 	Qli50_Wxt536_Error_Number = 0;
 	/* read wind data */
-	if(Wms_Wxt536_Command_Wind_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,
-					     &(Wxt536_Data.Wind_Data)))
+	if(Wms_Wxt536_Command_Wind_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&wind_data))
 	{
+		Wxt536_Data.Wind_Data = wind_data;
 		clock_gettime(CLOCK_REALTIME,&(Wxt536_Data.Wind_Timestamp));
 	}
 	else
 	{
-		/* diddly is the old current data now invalid here ? */
 		Qli50_Wxt536_Error_Number = 205;
 		sprintf(Qli50_Wxt536_Error_String,"Qli50_Wxt536_Wxt536_Read_Sensors:Reading Wind data failed.");
 		retval = FALSE;
 	}
 	/* read pressure/temperature/humidity data */
 	if(Wms_Wxt536_Command_Pressure_Temperature_Humidity_Data_Get("Wxt536","qli50_wxt536_wxt536.c",
-								     Wxt536_Device_Address,
-								     &(Wxt536_Data.Pressure_Temp_Humidity_Data)))
+								     Wxt536_Device_Address,&pressure_temp_humidity_data))
 	{
+		Wxt536_Data.Pressure_Temp_Humidity_Data = pressure_temp_humidity_data;
 		clock_gettime(CLOCK_REALTIME,&(Wxt536_Data.Pressure_Temp_Humidity_Timestamp));
 	}
 	else
 	{
-		/* diddly is the old current data now invalid here ? */
 		Qli50_Wxt536_Error_Number = 206;
 		sprintf(Qli50_Wxt536_Error_String,
 			"Qli50_Wxt536_Wxt536_Read_Sensors:Reading Pressure/Temperature/Humidity data failed.");
 		retval = FALSE;
 	}
 	/* read rain data */
-	if(Wms_Wxt536_Command_Precipitation_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,
-						     &(Wxt536_Data.Rain_Data)))
+	if(Wms_Wxt536_Command_Precipitation_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&rain_data))
 	{
+		Wxt536_Data.Rain_Data = rain_data;
 		clock_gettime(CLOCK_REALTIME,&(Wxt536_Data.Rain_Timestamp));
 	}
 	else
 	{
-		/* diddly is the old current data now invalid here ? */
 		Qli50_Wxt536_Error_Number = 207;
 		sprintf(Qli50_Wxt536_Error_String,"Qli50_Wxt536_Wxt536_Read_Sensors:Reading Rain data failed.");
 		retval = FALSE;
 	}
 	/* read supervisor data (internal temperatures/voltages) */
-	if(Wms_Wxt536_Command_Supervisor_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,
-						  &(Wxt536_Data.Supervisor_Data)))
+	if(Wms_Wxt536_Command_Supervisor_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&supervisor_data))
 	{
+		Wxt536_Data.Supervisor_Data = supervisor_data;
 		clock_gettime(CLOCK_REALTIME,&(Wxt536_Data.Supervisor_Timestamp));
 	}
 	else
 	{
-		/* diddly is the old current data now invalid here ? */
 		Qli50_Wxt536_Error_Number = 208;
 		sprintf(Qli50_Wxt536_Error_String,"Qli50_Wxt536_Wxt536_Read_Sensors:Reading Supervisor data failed.");
 		retval = FALSE;
 	}
 	/* read external analogue data (external rain sensor/pyranometer) */
-	if(Wms_Wxt536_Command_Analogue_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,
-						  &(Wxt536_Data.Analogue_Data)))
+	if(Wms_Wxt536_Command_Analogue_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&analogue_data))
 	{
+		Wxt536_Data.Analogue_Data = analogue_data;
 		clock_gettime(CLOCK_REALTIME,&(Wxt536_Data.Analogue_Timestamp));
 	}
 	else
 	{
-		/* diddly is the old current data now invalid here ? */
 		Qli50_Wxt536_Error_Number = 209;
 		sprintf(Qli50_Wxt536_Error_String,"Qli50_Wxt536_Wxt536_Read_Sensors:Reading Analogue data failed.");
 		retval = FALSE;
