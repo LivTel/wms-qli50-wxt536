@@ -183,26 +183,33 @@ int Qli50_Wxt536_Error_Number_Get(void)
 }
 
 /**
- * Routine to get the current time in a string. The string is returned in the format
- * '2000-12-31T13:59:59', or the string "Unknown time" if the routine failed.
+ * Routine to get the current time in a string. The string is returned in the format 'YYYY-MM-DDTHH:MM:SS.sss'.
  * The time is in UTC.
  * @param time_string The string to fill with the current time.
- * @param string_length The length of the buffer passed in. It is recommended the length is at least 20 characters.
+ * @param string_length The length of the buffer passed in. It is recommended the length is at least 24 characters.
+ * @see #QLI50_WXT536_ONE_MILLISECOND_NS
  */
 void Qli50_Wxt536_Current_Time_String_Get(char *time_string,int string_length)
 {
-	time_t current_time;
+	struct timespec current_time;
 	struct tm *utc_time = NULL;
+	char ms_buff[16];
+	int ms;
 
-	if(time(&current_time) > -1)
+	if(time_string == NULL)
+		return;
+	if(string_length < 24)
 	{
-		utc_time = gmtime(&current_time);
-		/*strftime(time_string,string_length,"%d/%m/%Y %H:%M:%S",utc_time);*/
-		strftime(time_string,string_length,"%Y-%m-%dT%H:%M:%S",utc_time);
+		strcpy(time_string,"");
+		return;
 	}
-	else
-		strncpy(time_string,"Unknown time",string_length);
-	/* diddly add milliseconds to this string */
+	clock_gettime(CLOCK_REALTIME,&current_time);
+	utc_time = gmtime(&(current_time.tv_sec));
+	strftime(time_string,string_length,"%Y-%m-%dT%H:%M:%S",utc_time);
+	/*  add milliseconds to this string */
+	ms = (current_time.tv_nsec/QLI50_WXT536_ONE_MILLISECOND_NS);
+	sprintf(ms_buff,"%d",ms);
+	strcat(time_string,ms_buff);
 }
 
 /**
