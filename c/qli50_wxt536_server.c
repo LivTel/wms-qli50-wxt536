@@ -186,37 +186,16 @@ static void Server_Read_Sensor_Callback(char qli_id,char seq_id)
 static void Server_Send_Result_Callback(char qli_id,char seq_id,struct Wms_Qli50_Data_Struct *data)
 {
 	Qli50_Wxt536_Error_Number = 0;
+	
 #if LOGGING > 1
 	Qli50_Wxt536_Log_Format("Server","qli50_wxt536_server.c",LOG_VERBOSITY_TERSE,
 				"Server_Send_Result_Callback invoked with qli_id '%c' and seq_id '%c'.",
 				qli_id,seq_id);
 #endif /* LOGGING */
-	data->Temperature.Type = DATA_TYPE_DOUBLE;
-	data->Temperature.Value.DValue = 0.0;
-	data->Humidity.Type = DATA_TYPE_DOUBLE;
-	data->Humidity.Value.DValue = 99.0;
-	data->Dew_Point.Type = DATA_TYPE_DOUBLE;
-	data->Dew_Point.Value.DValue = 1.0;
-	data->Wind_Speed.Type = DATA_TYPE_DOUBLE;
-	data->Wind_Speed.Value.DValue = 20.0;
-	data->Wind_Direction.Type = DATA_TYPE_INT;
-	data->Wind_Direction.Value.IValue = 359;
-	data->Air_Pressure.Type = DATA_TYPE_DOUBLE;
-	data->Air_Pressure.Value.DValue = 768.0;
-	data->Digital_Surface_Wet.Type = DATA_TYPE_INT;
-	data->Digital_Surface_Wet.Value.IValue = 4;
-	data->Analogue_Surface_Wet.Type = DATA_TYPE_INT;
-	data->Analogue_Surface_Wet.Value.IValue = 98;
-	data->Light.Type = DATA_TYPE_INT;
-	data->Light.Value.IValue = 1000;
-	data->Internal_Voltage.Type = DATA_TYPE_DOUBLE;
-	data->Internal_Voltage.Value.DValue = 0.0;
-	data->Internal_Current.Type = DATA_TYPE_DOUBLE;
-	data->Internal_Current.Value.DValue = 0.0;
-	data->Internal_Temperature.Type = DATA_TYPE_DOUBLE;
-	data->Internal_Temperature.Value.DValue = 0.0;
-	data->Reference_Temperature.Type = DATA_TYPE_DOUBLE;
-	data->Reference_Temperature.Value.DValue = 0.0;
+	if(!Qli50_Wxt536_Wxt536_Send_Results(qli_id,seq_id,data))
+	{
+		Qli50_Wxt536_Error();
+	}
 }
 
 /**

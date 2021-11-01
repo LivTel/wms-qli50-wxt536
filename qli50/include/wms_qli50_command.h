@@ -32,7 +32,11 @@
  * SYN (Synchronous idle) control character (Ctrl-V).
  */
 #define CHARACTER_SYN         ('\x16')
-
+/**
+ * An error code returned by the QLI50, when no measurement has been done yet.
+ * See wms_icd.ps, Table 2, P6/ QLI50_User_Guide.pdf, P50, Table 27.
+ */
+#define QLI50_ERROR_NO_MEASUREMENT    (12)
 /* enum */
 /**
  * An enumeration describing the data value returned. This is one of:

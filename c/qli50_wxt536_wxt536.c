@@ -23,6 +23,7 @@
 #include "qli50_wxt536_config.h"
 #include "qli50_wxt536_general.h"
 #include "qli50_wxt536_wxt536.h"
+#include "wms_qli50_command.h"
 #include "wms_wxt536_command.h"
 #include "wms_wxt536_connection.h"
 #include "log_udp.h"
@@ -93,7 +94,11 @@ static char Wxt536_Device_Address;
  * An instance of Wxt536_Data_Struct containing the last set of data read from the Wxt536.
  * @see #Wxt536_Data_Struct
  */
-struct Wxt536_Data_Struct Wxt536_Data;
+static struct Wxt536_Data_Struct Wxt536_Data;
+/**
+ * The maximum age of a datum read from the Wxt536 before it is deemed stale data, in decimal seconds.
+ */
+static double Max_Datum_Age;
 
 /* =======================================================
 ** external functions 
@@ -109,15 +114,18 @@ struct Wxt536_Data_Struct Wxt536_Data;
  *     Wxt536_Device_Address.
  * <li>We retrieve the Wxt536 protocol to use from the config file (keyword "wxt536.protocol").
  * <li>We call Wms_Wxt536_Command_Comms_Settings_Protocol_Set to set the protocol to use with the Wxt536.
+ * <li>We retrieve the Max_Datum_Age from the config file using Qli50_Wxt536_Config_Double_Get.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
  *         Qli50_Wxt536_Error_String will be set with a suitable error.
  * @see #FILENAME_LENGTH
  * @see #Serial_Device_Filename
  * @see #Wxt536_Device_Address
+ * @see #Max_Datum_Age
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
  * @see qli50_wxt536_config.html#Qli50_Wxt536_Config_String_Get
+ * @see qli50_wxt536_config.html#Qli50_Wxt536_Config_Double_Get
  * @see ../wxt536/cdocs/wms_wxt536_connection.html#Wms_Wxt536_Connection_Open
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Device_Address_Get
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Comms_Settings_Protocol_Set
@@ -166,7 +174,10 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 			"Failed to set the communication protocol to '%c' "
 			"for Wxt536 device address '%c'.",protocol,Wxt536_Device_Address);		
 		return FALSE;
-	}	
+	}
+	/* get the maximum datum age in seconds */
+	if(!Qli50_Wxt536_Config_Double_Get("wxt536.max_datum_age",&Max_Datum_Age))
+		return FALSE;
 	return TRUE;
 }
 
@@ -285,6 +296,108 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 	return retval;
 }
 
+/**
+ * Process a 'Send Results' command received by the Qli50 server. This fills in the supplied instance
+ * of Wms_Qli50_Data_Struct with data obtained fromm a previous 'Read Sensor' command, converting any
+ * units as necessary and noting any out of date datums.
+ * @param qli_id A single character, representing the QLI Id of the Qli50 that is required to read it's sensors.
+ * @param seq_id A single character, representing the QLI50 sequence id of the set of readings 
+ *        the QLI50 is meant to take.
+ * @param data The address of a Wms_Qli50_Data_Struct to fill in with converted Wxt536 data, to be sent as 
+ *       a reply to the Qli50 'Send Results' command.
+ * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
+ *         Qli50_Wxt536_Error_String will be set with a suitable error.
+ * @see #Wxt536_Data
+ * @see #Wxt536_Data_Struct
+ * @see #Max_Datum_Age
+ * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
+ * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
+ * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
+ * @see ../qli50/cdocs/wms_qli50_command.html#Wms_Qli50_Data_Struct
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Wind_Data_Get
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Pressure_Temperature_Humidity_Data_Get
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Precipitation_Data_Get
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Supervisor_Data_Get
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Analogue_Data_Get
+ */
+int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Data_Struct *data)
+{
+	struct timespec current_time;
+
+	/* get the current time */
+	clock_gettime(CLOCK_REALTIME,&current_time);
+
+	/* pressure/temperature/humidity */
+	if(fdifftime(Wxt536_Data.Pressure_Temp_Humidity_Timestamp,current_time) < Max_Datum_Age)
+	{
+		/* air temperature in degrees centigrade. */
+		data->Temperature.Type = DATA_TYPE_DOUBLE;
+		data->Temperature.Value.DValue = Wxt536_Data.Pressure_Temp_Humidity_Data.Air_Temperature;
+		/* relative humidity in % */
+		data->Humidity.Type = DATA_TYPE_DOUBLE;
+		data->Humidity.Value.DValue = Wxt536_Data.Pressure_Temp_Humidity_Data.Relative_Humidity;
+		/* air pressure in hPa/mbar */
+		data->Air_Pressure.Type = DATA_TYPE_DOUBLE;
+		data->Air_Pressure.Value.DValue = Wxt536_Data.Pressure_Temp_Humidity_Data.Air_Pressure;
+	}
+	else
+	{
+		data->Temperature.Type = DATA_TYPE_ERROR;
+		data->Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+		data->Humidity.Type = DATA_TYPE_ERROR;
+		data->Humidity.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+		data->Air_Pressure.Type = DATA_TYPE_ERROR;
+		data->Air_Pressure.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
+	/* diddly TODO */
+	data->Dew_Point.Type = DATA_TYPE_DOUBLE;
+	data->Dew_Point.Value.DValue = 1.0;
+	/* wind speed / direction */
+	if(fdifftime(Wxt536_Data.Wind_Timestamp,current_time) < Max_Datum_Age)
+	{
+		/* wind speed in m/s, currently using wxt536's average value */
+		data->Wind_Speed.Type = DATA_TYPE_DOUBLE;
+		data->Wind_Speed.Value.DValue = Wxt536_Data.Wind_Data.Wind_Speed_Average;
+		/* wind direction in degrees, currently using wxt536's average value */
+		data->Wind_Direction.Type = DATA_TYPE_INT;
+		data->Wind_Direction.Value.IValue = Wxt536_Data.Wind_Data.Wind_Direction_Average;
+	}
+	else
+	{
+		data->Wind_Speed.Type = DATA_TYPE_ERROR;
+		data->Wind_Speed.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+		data->Wind_Direction.Type = DATA_TYPE_ERROR;
+		data->Wind_Direction.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
+	/* diddly todo */
+	data->Digital_Surface_Wet.Type = DATA_TYPE_INT;
+	data->Digital_Surface_Wet.Value.IValue = 4;
+	data->Analogue_Surface_Wet.Type = DATA_TYPE_INT;
+	data->Analogue_Surface_Wet.Value.IValue = 98;
+	if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
+	{
+		/* the Wxt536 pyranometer is connected to the analogue input. The Solar_Radiation_Voltage is in
+		** volts (multiplied by the gain).
+		** The Qli50 supplies Light as an integer, in Watts per metre squared. */
+		data->Light.Type = DATA_TYPE_INT;
+		data->Light.Value.IValue = 1000;
+	}
+	else
+	{
+		data->Light.Type = DATA_TYPE_ERROR;
+		data->Light.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
+	data->Internal_Voltage.Type = DATA_TYPE_DOUBLE;
+	data->Internal_Voltage.Value.DValue = 0.0;
+	data->Internal_Current.Type = DATA_TYPE_DOUBLE;
+	data->Internal_Current.Value.DValue = 0.0;
+	data->Internal_Temperature.Type = DATA_TYPE_DOUBLE;
+	data->Internal_Temperature.Value.DValue = 0.0;
+	data->Reference_Temperature.Type = DATA_TYPE_DOUBLE;
+	data->Reference_Temperature.Value.DValue = 0.0;
+	
+	return TRUE;
+}
 /* =======================================================
 ** internal functions 
 ** ======================================================= */

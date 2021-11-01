@@ -19,16 +19,30 @@
 /**
  * How long the error string is.
  */
-#define QLI50_WXT536_ERROR_LENGTH (1024)
+#define QLI50_WXT536_ERROR_LENGTH       (1024)
+/**
+ * The number of nanoseconds in one second. A struct timespec has fields in nanoseconds.
+ */
+#define QLI50_WXT536_ONE_SECOND_NS	(1000000000)
 /**
  * One millosecond in nanoseconds (1000000).
  */
-#define QLI50_WXT536_ONE_MILLISECOND_NS   (1000000)
+#define QLI50_WXT536_ONE_MILLISECOND_NS (1000000)
 
 /**
  * Macro to check whether the parameter is either TRUE or FALSE.
  */
 #define QLI50_WXT536_IS_BOOLEAN(value)	(((value) == TRUE)||((value) == FALSE))
+#ifndef fdifftime
+/**
+ * Return double difference (in seconds) between two struct timespec's.
+ * @param t0 A struct timespec.
+ * @param t1 A struct timespec.
+ * @return A double, in seconds, representing the time elapsed from t0 to t1.
+ * @see #QLI50_WXT536_ONE_SECOND_NS
+ */
+#define fdifftime(t1, t0) (((double)(((t1).tv_sec)-((t0).tv_sec))+(double)(((t1).tv_nsec)-((t0).tv_nsec))/QLI50_WXT536_ONE_SECOND_NS))
+#endif
 
 /* external functions */
 extern void Qli50_Wxt536_Error(void);
