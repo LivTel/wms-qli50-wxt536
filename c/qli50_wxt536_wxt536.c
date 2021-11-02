@@ -16,6 +16,7 @@
 #define _POSIX_C_SOURCE 199309L
 
 #include <errno.h>   /* Error number definitions */
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,6 +100,20 @@ static struct Wxt536_Data_Struct Wxt536_Data;
  * The maximum age of a datum read from the Wxt536 before it is deemed stale data, in decimal seconds.
  */
 static double Max_Datum_Age;
+/**
+ * The gain applied to the pyranometer voltage returned by the Wxt536. The factory default is 100000,
+ * and the currently set gain can be read by the "0IB,G" command.
+ */
+static double Wxt536_Pyranometer_Gain = 100000;
+/**
+ * The CMP3 pyranometer sensitivity, in uV/W/m^2. This is written on the sensor, and is 30.95 uV/W/m^2
+ * for our current sensor.
+ */
+static double CMP3_Pyranometer_Sensitivity = 30.95;
+
+/* internal functions */
+static double Wxt536_Calculate_Dew_Point(struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct pth_data);
+static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage);
 
 /* =======================================================
 ** external functions 
@@ -115,6 +130,8 @@ static double Max_Datum_Age;
  * <li>We retrieve the Wxt536 protocol to use from the config file (keyword "wxt536.protocol").
  * <li>We call Wms_Wxt536_Command_Comms_Settings_Protocol_Set to set the protocol to use with the Wxt536.
  * <li>We retrieve the Max_Datum_Age from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the Wxt536_Pyranometer_Gain from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the CMP3_Pyranometer_Sensitivity from the config file using Qli50_Wxt536_Config_Double_Get.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
  *         Qli50_Wxt536_Error_String will be set with a suitable error.
@@ -122,6 +139,8 @@ static double Max_Datum_Age;
  * @see #Serial_Device_Filename
  * @see #Wxt536_Device_Address
  * @see #Max_Datum_Age
+ * @see #Wxt536_Pyranometer_Gain
+ * @see #CMP3_Pyranometer_Sensitivity
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
  * @see qli50_wxt536_config.html#Qli50_Wxt536_Config_String_Get
@@ -177,6 +196,12 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 	}
 	/* get the maximum datum age in seconds */
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.max_datum_age",&Max_Datum_Age))
+		return FALSE;
+	/* get the Wxt536 pyranometer gain */
+	if(!Qli50_Wxt536_Config_Double_Get("wxt536.pyranometer.gain",&Wxt536_Pyranometer_Gain))
+		return FALSE;
+	/* get the CMP3 pyranometer sensitivity in uV/W/m^2*/
+	if(!Qli50_Wxt536_Config_Double_Get("cmp3.pyranometer.sensitivity",&CMP3_Pyranometer_Sensitivity))
 		return FALSE;
 	return TRUE;
 }
@@ -310,6 +335,8 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
  * @see #Wxt536_Data
  * @see #Wxt536_Data_Struct
  * @see #Max_Datum_Age
+ * @see #Wxt536_Calculate_Dew_Point
+ * @see #Wxt536_Pyranometer_Volts_to_Watts_M2
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
  * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
@@ -339,6 +366,9 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		/* air pressure in hPa/mbar */
 		data->Air_Pressure.Type = DATA_TYPE_DOUBLE;
 		data->Air_Pressure.Value.DValue = Wxt536_Data.Pressure_Temp_Humidity_Data.Air_Pressure;
+		/* Calculate the Dew point from the temperature and relative humidity */
+		data->Dew_Point.Type = DATA_TYPE_DOUBLE;
+		data->Dew_Point.Value.DValue = Wxt536_Calculate_Dew_Point(Wxt536_Data.Pressure_Temp_Humidity_Data);
 	}
 	else
 	{
@@ -348,10 +378,9 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		data->Humidity.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 		data->Air_Pressure.Type = DATA_TYPE_ERROR;
 		data->Air_Pressure.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+		data->Dew_Point.Type = DATA_TYPE_ERROR;
+		data->Dew_Point.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
-	/* diddly TODO */
-	data->Dew_Point.Type = DATA_TYPE_DOUBLE;
-	data->Dew_Point.Value.DValue = 1.0;
 	/* wind speed / direction */
 	if(fdifftime(Wxt536_Data.Wind_Timestamp,current_time) < Max_Datum_Age)
 	{
@@ -380,24 +409,69 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		** volts (multiplied by the gain).
 		** The Qli50 supplies Light as an integer, in Watts per metre squared. */
 		data->Light.Type = DATA_TYPE_INT;
-		data->Light.Value.IValue = 1000;
+		data->Light.Value.IValue = Wxt536_Pyranometer_Volts_To_Watts_M2(Wxt536_Data.Analogue_Data.Solar_Radiation_Voltage);
 	}
 	else
 	{
 		data->Light.Type = DATA_TYPE_ERROR;
 		data->Light.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
-	data->Internal_Voltage.Type = DATA_TYPE_DOUBLE;
-	data->Internal_Voltage.Value.DValue = 0.0;
-	data->Internal_Current.Type = DATA_TYPE_DOUBLE;
-	data->Internal_Current.Value.DValue = 0.0;
-	data->Internal_Temperature.Type = DATA_TYPE_DOUBLE;
-	data->Internal_Temperature.Value.DValue = 0.0;
-	data->Reference_Temperature.Type = DATA_TYPE_DOUBLE;
-	data->Reference_Temperature.Value.DValue = 0.0;
-	
+	if(fdifftime(Wxt536_Data.Supervisor_Timestamp,current_time) < Max_Datum_Age)
+	{
+		/* QLI50 internal voltage is the primary power voltage - which is the Wxt536 supply voltage */
+		data->Internal_Voltage.Type = DATA_TYPE_DOUBLE;
+		data->Internal_Voltage.Value.DValue = Wxt536_Data.Supervisor_Data.Supply_Voltage;
+	}
+	else
+	{
+		data->Internal_Voltage.Type = DATA_TYPE_ERROR;
+		data->Internal_Voltage.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
+	/* The Wxt536 does not supply current data? */
+	data->Internal_Current.Type = DATA_TYPE_ERROR;
+	data->Internal_Current.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	/* The Wxt536 does not supply it's internal temperature. It does supply a heating temperature when the unit
+	** is heated, but this can be off. */
+	data->Internal_Temperature.Type = DATA_TYPE_ERROR;
+	data->Internal_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	/* The Wxt536 does not supply a reference temperature, though it does have a reference voltage! */
+	data->Reference_Temperature.Type = DATA_TYPE_ERROR;
+	data->Reference_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	return TRUE;
 }
+
 /* =======================================================
 ** internal functions 
 ** ======================================================= */
+/**
+ * Routine to calculate the dew point based on the temperature and relative humidity.
+ * This is based on the QLI50 formula, documented in the QLI50 manual, P62 'TDEW Calculation Channel'.
+ * @param pth_data An instance of Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct containing
+ *        the pressure and humidity readings.
+ * @return The routine returns the dew point as a double, in degrees centigrade.
+ */
+static double Wxt536_Calculate_Dew_Point(struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct pth_data)
+{
+	double tdew,a,b,c,lower;
+
+	a = log(100.0/pth_data.Relative_Humidity);
+	b = (15.0 * a)- (2.1 * pth_data.Air_Temperature) + 2711.5;
+	c = pth_data.Air_Temperature + 273.16;
+	lower = (c * (a/2.0)) + b;
+       	tdew = ((c * b)/lower) - 273.16;
+	return tdew;
+}
+
+/**
+ * Internal function to convert the voltage returned by the pyranometer to a light value in watts/m^2.
+ * The calculation involves the calibration of the CMP3, and the gain applied by the Wxt536.
+ * @param voltage The voltage returned by the Wxt536 for the pyranometer (in Volts multiplied by the gain).
+ * @return The amount of light falling on the sensor, in Watts/ M^2.
+ * @see Wxt536_Pyranometer_Gain
+ * @see CMP3_Pyranometer_Sensitivity
+ */
+static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
+{
+	/* The CMP3 Pyranometer Sensitivity is in uV/W/m^2 */
+	return (int)( (voltage/Wxt536_Pyranometer_Gain) / CMP3_Pyranometer_Sensitivity/1000000);
+}
