@@ -399,8 +399,11 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		data->Wind_Direction.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
 	/* diddly todo */
+	/* QLI50 digital surface wetness, valid range 2..5. Output is an open collector, active low signal responds to rain. 
+	** Rain is held on for 2 minutes. */
 	data->Digital_Surface_Wet.Type = DATA_TYPE_INT;
 	data->Digital_Surface_Wet.Value.IValue = 4;
+	/* analogue surface wetness, valid range 0..10. Actual DRD11A is 3v fully wet, 1v fully dry */
 	data->Analogue_Surface_Wet.Type = DATA_TYPE_INT;
 	data->Analogue_Surface_Wet.Value.IValue = 98;
 	if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
@@ -434,7 +437,8 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 	** is heated, but this can be off. */
 	data->Internal_Temperature.Type = DATA_TYPE_ERROR;
 	data->Internal_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
-	/* The Wxt536 does not supply a reference temperature, though it does have a reference voltage! */
+	/* The Wxt536 does not supply a reference temperature, though it does have a reference voltage! 
+	** N.B. Reference temperature is critical in Wms.cfg (-40...80) N.B. */
 	data->Reference_Temperature.Type = DATA_TYPE_ERROR;
 	data->Reference_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	return TRUE;
