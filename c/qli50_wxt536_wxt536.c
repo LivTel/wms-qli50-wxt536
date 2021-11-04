@@ -114,6 +114,10 @@ static double CMP3_Pyranometer_Sensitivity = 30.95;
 /* internal functions */
 static double Wxt536_Calculate_Dew_Point(struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct pth_data);
 static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage);
+static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
+					   struct Wms_Qli50_Data_Value *digital_surface_wet_value);
+static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
+					    struct Wms_Qli50_Data_Value *analogue_surface_wet_value);
 
 /* =======================================================
 ** external functions 
@@ -337,6 +341,7 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
  * @see #Max_Datum_Age
  * @see #Wxt536_Calculate_Dew_Point
  * @see #Wxt536_Pyranometer_Volts_to_Watts_M2
+ * @see #Wxt536_Digital_Surface_Wet_Set
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
  * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
@@ -400,12 +405,14 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 	}
 	/* diddly todo */
 	/* QLI50 digital surface wetness, valid range 2..5. Output is an open collector, active low signal responds to rain. 
-	** Rain is held on for 2 minutes. */
-	data->Digital_Surface_Wet.Type = DATA_TYPE_INT;
-	data->Digital_Surface_Wet.Value.IValue = 4;
-	/* analogue surface wetness, valid range 0..10. Actual DRD11A is 3v fully wet, 1v fully dry */
-	data->Analogue_Surface_Wet.Type = DATA_TYPE_INT;
-	data->Analogue_Surface_Wet.Value.IValue = 98;
+	** Rain is held on for 2 minutes. 
+	** Basically, should be 0v when wet, and 5v when dry. */
+	Wxt536_Digital_Surface_Wet_Set(current_time,&(data->Digital_Surface_Wet));
+	/* analogue surface wetness, valid range 0..10. Actual DRD11A is 3v fully wet, 1v fully dry
+	** I think it's actually in percent, therefore 0..10% count as dry, above that it's wet
+	** I cannot reconcile this against the DRD11A documentation/QLI50 config however. */
+	Wxt536_Analogue_Surface_Wet_Set(current_time,&(data->Analogue_Surface_Wet));
+	/* pyranometer */
 	if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
 	{
 		/* the Wxt536 pyranometer is connected to the analogue input. The Solar_Radiation_Voltage is in
@@ -478,4 +485,113 @@ static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
 {
 	/* The CMP3 Pyranometer Sensitivity is in uV/W/m^2 */
 	return (int)( (voltage/Wxt536_Pyranometer_Gain) / CMP3_Pyranometer_Sensitivity/1000000);
+}
+
+/**
+ * Routine to set the digital surface wet value based on the Wxt536 precipitation data and Wxt536 analogue data (with DRD11A
+ * rain sensor attached).
+ * We think the QLI50 digital surface wet value should be 0v when wet, and 5v when dry.
+ * @param current_time An instance of struct timespec representing the current time, we use this to compare
+ *        with the data timestamps to ensure the data has not gone out of date.
+ * @param digital_surface_wet_value The instance of Wms_Qli50_Data_Value to fill in with the QLI50 digital surface wet
+ *        value to return.
+ * @see #Wxt536_Data
+ * @see #Wxt536_Data_Struct
+ * @see #Max_Datum_Age
+ * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
+ * @see ../qli50/cdocs/wms_qli50_command.html#Wms_Qli50_Data_Value
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Precipitation_Data_Get
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Analogue_Data_Get
+ */
+static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
+					   struct Wms_Qli50_Data_Value *digital_surface_wet_value)
+{
+	/* if the precipitation timestamp is new enough use precipitation */
+	if(fdifftime(Wxt536_Data.Rain_Timestamp,current_time) < Max_Datum_Age)
+	{
+		if((Wxt536_Data.Rain_Data.Rain_Intensity > 0)||(Wxt536_Data.Rain_Data.Hail_Intensity > 0))
+		{
+			digital_surface_wet_value->Type = DATA_TYPE_INT;
+			digital_surface_wet_value->Value.IValue = 0; /* wet */
+		}
+		else
+		{
+			digital_surface_wet_value->Type = DATA_TYPE_INT;
+			digital_surface_wet_value->Value.IValue = 4; /* dry */
+		}
+	}
+	/* if the analogue timestamp is new enough use the DRD11A */
+	else if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
+	{
+		/* The DRD11A is connected to the Ultrasonic Level analogue input.
+		** This should read 3v fully wet, 1v fully dry. */
+		if(Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage > 1.2)
+		{
+			digital_surface_wet_value->Type = DATA_TYPE_INT;
+			digital_surface_wet_value->Value.IValue = 0; /* wet */
+		}
+		else
+		{
+			digital_surface_wet_value->Type = DATA_TYPE_INT;
+			digital_surface_wet_value->Value.IValue = 4; /* dry */
+		}
+	}
+	else
+	{
+		/* we have no up to date measurement */
+		digital_surface_wet_value->Type = DATA_TYPE_ERROR;
+		digital_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
+}
+
+/**
+ * Routine to set the analogue surface wet value based on the Wxt536 precipitation data and Wxt536 analogue data (with DRD11A
+ * rain sensor attached).
+ * We think the QLI50 analogue surface wet value is meant to be a percentage 0..100, 
+ * the Wms counts 0..10 as dry and above that as wet (i.e. the Wms goes into suspend above 10%).
+ * @param current_time An instance of struct timespec representing the current time, we use this to compare
+ *        with the data timestamps to ensure the data has not gone out of date.
+ * @param analogue_surface_wet_value The instance of Wms_Qli50_Data_Value to fill in with the QLI50 analogue surface wet
+ *        value to return.
+ * @see #Wxt536_Data
+ * @see #Wxt536_Data_Struct
+ * @see #Max_Datum_Age
+ * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
+ * @see ../qli50/cdocs/wms_qli50_command.html#Wms_Qli50_Data_Value
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Precipitation_Data_Get
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Analogue_Data_Get
+ */
+static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
+					    struct Wms_Qli50_Data_Value *analogue_surface_wet_value)
+{
+	
+	/* if the analogue timestamp is new enough use the DRD11A */
+	if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
+	{
+		/* The DRD11A is connected to the Ultrasonic Level analogue input.
+		** This should read 3v fully wet, 1v fully dry. */
+		analogue_surface_wet_value->Type = DATA_TYPE_INT;
+		analogue_surface_wet_value->Value.IValue = (int)((Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage-1.0)*50.0);
+		if(analogue_surface_wet_value->Value.IValue < 0)
+			analogue_surface_wet_value->Value.IValue = 0;
+		if(analogue_surface_wet_value->Value.IValue > 100)
+			analogue_surface_wet_value->Value.IValue = 100;
+	}
+	/* if the precipitation timestamp is new enough use precipitation */
+	else if(fdifftime(Wxt536_Data.Rain_Timestamp,current_time) < Max_Datum_Age)
+	{
+		analogue_surface_wet_value->Type = DATA_TYPE_INT;
+		/* rain intensity is measured in mm/h. Scale so 1 mm/h is 100% and range check result */
+		analogue_surface_wet_value->Value.IValue = (int)(Wxt536_Data.Rain_Data.Rain_Intensity*100.0);
+		if(analogue_surface_wet_value->Value.IValue < 0)
+			analogue_surface_wet_value->Value.IValue = 0;
+		if(analogue_surface_wet_value->Value.IValue > 100)
+			analogue_surface_wet_value->Value.IValue = 100;
+	}
+	else
+	{
+		/* we have no up to date measurement */
+		analogue_surface_wet_value->Type = DATA_TYPE_ERROR;
+		analogue_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
 }
