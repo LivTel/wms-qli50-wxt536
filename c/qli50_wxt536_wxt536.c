@@ -104,7 +104,7 @@ static double Max_Datum_Age;
  * The gain applied to the pyranometer voltage returned by the Wxt536. The factory default is 100000,
  * and the currently set gain can be read by the "0IB,G" command.
  */
-static double Wxt536_Pyranometer_Gain = 100000;
+static double Wxt536_Pyranometer_Gain = 100000.0;
 /**
  * The CMP3 pyranometer sensitivity, in uV/W/m^2. This is written on the sensor, and is 30.95 uV/W/m^2
  * for our current sensor.
@@ -533,14 +533,27 @@ static double Wxt536_Calculate_Dew_Point(struct Wxt536_Command_Pressure_Temperat
  * Internal function to convert the voltage returned by the pyranometer to a light value in watts/m^2.
  * The calculation involves the calibration of the CMP3, and the gain applied by the Wxt536.
  * @param voltage The voltage returned by the Wxt536 for the pyranometer (in Volts multiplied by the gain).
- * @return The amount of light falling on the sensor, in Watts/ M^2.
+ * @return The amount of light falling on the sensor, as an integer, in Watts/ M^2.
  * @see Wxt536_Pyranometer_Gain
  * @see CMP3_Pyranometer_Sensitivity
  */
 static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
 {
+	double a,b;
+	int light;
+	
 	/* The CMP3 Pyranometer Sensitivity is in uV/W/m^2 */
-	return (int)( (voltage/Wxt536_Pyranometer_Gain) / CMP3_Pyranometer_Sensitivity/1000000.0);
+	a = voltage/Wxt536_Pyranometer_Gain;
+	b =  CMP3_Pyranometer_Sensitivity/1000000.0;
+	light = (int)(a/b);
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+				"Wxt536_Pyranometer_Volts_To_Watts_M2:"
+				"Pyranometer voltage %.3f v, gain %.3f, sensitivity %.3f uV/W/m^2, "
+				"a = %.3f, b = %.3f, light = %d W / M^2.",voltage,Wxt536_Pyranometer_Gain,
+				CMP3_Pyranometer_Sensitivity,a,b,light);
+#endif /* LOGGING */
+	return light;
 }
 
 /**
