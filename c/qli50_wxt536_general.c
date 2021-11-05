@@ -208,7 +208,7 @@ void Qli50_Wxt536_Current_Time_String_Get(char *time_string,int string_length)
 	strftime(time_string,string_length,"%Y-%m-%dT%H:%M:%S",utc_time);
 	/*  add milliseconds to this string */
 	ms = (current_time.tv_nsec/QLI50_WXT536_ONE_MILLISECOND_NS);
-	sprintf(ms_buff,"%d",ms);
+	sprintf(ms_buff,".%03d",ms);
 	strcat(time_string,ms_buff);
 }
 
