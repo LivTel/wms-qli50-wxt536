@@ -1,5 +1,5 @@
-/* qli50_command_read_sensors.c
-** Open a connection to the Vaisala Qli50, and send a send results command.
+/* qli50_monitor_weather.c
+** Open a connection to the Vaisala Qli50, and loop sending read sensors/send_result commands.
 */
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +11,7 @@
 #include "wms_serial_general.h"
 
 /**
- * Open a connection to the Vaisala Qli50, and send a send results command.
+ * Open a connection to the Vaisala Qli50, and loop sending read sensors/send_result commands.
  * @author $Author: cjm $
  */
 /**
@@ -33,7 +33,7 @@ char Serial_Device_Name[256];
  */
 char Qli50_Id = 'A';
 /**
- * A character representing the QLI50 sequence to use when reading sensors. Usually 'A'.
+ * A character representing the QLI50 sequence to use when sending commands. Usually 'A'.
  */
 char Seq_Id = 'A';
 
@@ -51,8 +51,8 @@ static void Help(void);
  * @see #Serial_Device_Name
  * @see #Qli50_Id
  * @see #Seq_Id
- * @see #Parse_Arguments
  * @see #Print_Result
+ * @see #Parse_Arguments
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Set_Log_Handler_Function
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Log_Handler_Stdout
  * @see ../cdocs/wms_qli50_general.html#Wms_Qli50_Set_Log_Filter_Function
@@ -62,6 +62,7 @@ static void Help(void);
  * @see ../cdocs/wms_qli50_connection.html#Wms_Qli50_Connection_Open
  * @see ../cdocs/wms_qli50_connection.html#Wms_Qli50_Connection_Close
  * @see ../cdocs/wms_qli50_command.htmlWms_Qli50_Data_Struct
+ * @see ../cdocs/wms_qli50_command.html#Wms_Qli50_Command_Read_Sensors
  * @see ../cdocs/wms_qli50_command.html#Wms_Qli50_Command_Send_Results
  * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Set_Log_Handler_Function
  * @see ../../serial/cdocs/wms_serial_general.html#Wms_Serial_Log_Handler_Stdout
@@ -74,8 +75,9 @@ static void Help(void);
 int main(int argc, char *argv[])
 {
 	struct Wms_Qli50_Data_Struct data;
+	int done;
 	
-	fprintf(stdout,"Qli50 Send Results\n");
+	fprintf(stdout,"Qli50 Monitor Weather\n");
 	/* initialise logging */
 	Wms_Qli50_Set_Log_Handler_Function(Wms_Qli50_Log_Handler_Stdout);
 	Wms_Qli50_Set_Log_Filter_Function(Wms_Qli50_Log_Filter_Level_Absolute);
@@ -90,48 +92,64 @@ int main(int argc, char *argv[])
 	/* open interface */
 	if(strlen(Serial_Device_Name) < 1)
 	{
-		fprintf(stdout,"Qli50 Send Results: Specify a serial device filename.\n");
+		fprintf(stdout,"Qli50 Monitor Weather: Specify a serial device filename.\n");
 		return 2;
 	}
-	if(!Wms_Qli50_Connection_Open("Qli50 Send Results","qli50_command_send_results.c",Serial_Device_Name))
+	if(!Wms_Qli50_Connection_Open("Qli50 Monitor Weather","qli50_monitor_weather.c",Serial_Device_Name))
 	{
 		Wms_Qli50_Error();
 		if(Wms_Serial_Get_Error_Number() != 0)
 			Wms_Serial_Error();
 		return 3;
 	}
-	/* send command and read reply */
-	fprintf(stdout,"Sending Send Results with sequence id '%c' to Qli50 with Id '%c'.\n",Seq_Id,Qli50_Id);
-	if(!Wms_Qli50_Command_Send_Results("Qli50 Send Results","qli50_command_send_results.c",Qli50_Id,Seq_Id,&data))
+	done = FALSE;
+	while(done == FALSE)
 	{
-		Wms_Qli50_Error();
-		if(Wms_Serial_Get_Error_Number() != 0)
-			Wms_Serial_Error();
-		return 4;
-	}
-	fprintf(stdout,"Qli50 send results has been sent.\n");
-	Print_Result("Temperature",data.Temperature);
-	Print_Result("Humidity",data.Humidity);
-	Print_Result("Dew Point",data.Dew_Point);
-	Print_Result("Wind Speed",data.Wind_Speed);
-	Print_Result("Wind Direction",data.Wind_Direction);
-	Print_Result("Air Pressure",data.Air_Pressure);
-	Print_Result("Digital Surface Wet",data.Digital_Surface_Wet);
-	Print_Result("Analogue Surface Wet",data.Analogue_Surface_Wet);
-	Print_Result("Light",data.Light);
-	Print_Result("Internal Voltage",data.Internal_Voltage);
-	Print_Result("Internal Current",data.Internal_Current);
-	Print_Result("Internal Temperature",data.Internal_Temperature);
-	Print_Result("Reference Temperature",data.Reference_Temperature);
+		/* send command and read reply */
+		fprintf(stdout,"Sending Read Sensors with sequence id '%c' to Qli50 with Id '%c'.\n",Seq_Id,Qli50_Id);
+		if(!Wms_Qli50_Command_Read_Sensors("Qli50 Monitor Weather","qli50_monitor_weather.c",Qli50_Id,Seq_Id))
+		{
+			Wms_Qli50_Error();
+			if(Wms_Serial_Get_Error_Number() != 0)
+				Wms_Serial_Error();
+			return 4;
+		}
+		fprintf(stdout,"Qli50 read sensors has been sent.\n");
+		/* we need to sleep whilst the Qli50 does something. 1 second is normal. */
+		sleep(1);
+		/* send command and read reply */
+		fprintf(stdout,"Sending Send Results with sequence id '%c' to Qli50 with Id '%c'.\n",Seq_Id,Qli50_Id);
+		if(!Wms_Qli50_Command_Send_Results("Qli50 Send Results","qli50_command_send_results.c",Qli50_Id,Seq_Id,&data))
+		{
+			Wms_Qli50_Error();
+			if(Wms_Serial_Get_Error_Number() != 0)
+				Wms_Serial_Error();
+			return 4;
+		}
+		fprintf(stdout,"Qli50 send results has returned.\n");
+		Print_Result("Temperature",data.Temperature);
+		Print_Result("Humidity",data.Humidity);
+		Print_Result("Dew Point",data.Dew_Point);
+		Print_Result("Wind Speed",data.Wind_Speed);
+		Print_Result("Wind Direction",data.Wind_Direction);
+		Print_Result("Air Pressure",data.Air_Pressure);
+		Print_Result("Digital Surface Wet",data.Digital_Surface_Wet);
+		Print_Result("Analogue Surface Wet",data.Analogue_Surface_Wet);
+		Print_Result("Light",data.Light);
+		Print_Result("Internal Voltage",data.Internal_Voltage);
+		Print_Result("Internal Current",data.Internal_Current);
+		Print_Result("Internal Temperature",data.Internal_Temperature);
+		Print_Result("Reference Temperature",data.Reference_Temperature);		
+	}/* end while not done */
 	/* close interface */
-	if(!Wms_Qli50_Connection_Close("Qli50 Send Results","qli50_command_send_results.c"))
+	if(!Wms_Qli50_Connection_Close("Qli50 Monitor Weather","qli50_monitor_weather.c"))
 	{
 		Wms_Qli50_Error();
 		if(Wms_Serial_Get_Error_Number() != 0)
 			Wms_Serial_Error();
 		return 5;
 	}
-	fprintf(stdout,"Qli50 Send Results:Finished.\n");
+	fprintf(stdout,"Qli50 Monitor Weather:Finished.\n");
 	return 0;
 }
 
@@ -187,7 +205,7 @@ static int Parse_Arguments(int argc, char *argv[])
 				retval = sscanf(argv[i+1],"%d",&ivalue);
 				if(retval != 1)
 				{
-					fprintf(stderr,"Qli50 Send Results:Parse_Arguments:"
+					fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:"
 						"Illegal log level %s.\n",argv[i+1]);
 					return FALSE;
 				}
@@ -197,7 +215,7 @@ static int Parse_Arguments(int argc, char *argv[])
 			}
 			else
 			{
-				fprintf(stderr,"Qli50 Send Results:Parse_Arguments:"
+				fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:"
 					"Log Level requires a number.\n");
 				return FALSE;
 			}
@@ -210,7 +228,7 @@ static int Parse_Arguments(int argc, char *argv[])
 					Qli50_Id = argv[i+1][0];
 				else
 				{
-					fprintf(stderr,"Qli50 Send Results:Parse_Arguments:"
+					fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:"
 						"Qli50_Id parameter must be a single letter.\n");
 					return FALSE;
 				}
@@ -218,7 +236,7 @@ static int Parse_Arguments(int argc, char *argv[])
 			}
 			else
 			{
-				fprintf(stderr,"Qli50 Send Results:Parse_Arguments:"
+				fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:"
 					"Qli50 Id requires an Id.\n");
 				return FALSE;
 			}
@@ -232,7 +250,7 @@ static int Parse_Arguments(int argc, char *argv[])
 			}
 			else
 			{
-				fprintf(stderr,"Qli50 Send Results:Parse_Arguments:"
+				fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:"
 					"Device filename requires a filename.\n");
 				return FALSE;
 			}
@@ -245,7 +263,7 @@ static int Parse_Arguments(int argc, char *argv[])
 					Seq_Id = argv[i+1][0];
 				else
 				{
-					fprintf(stderr,"Qli50 Send Results:Parse_Arguments:"
+					fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:"
 						"Seq_Id parameter must be a single letter.\n");
 					return FALSE;
 				}
@@ -253,14 +271,14 @@ static int Parse_Arguments(int argc, char *argv[])
 			}
 			else
 			{
-				fprintf(stderr,"Qli50 Send Results:Parse_Arguments:"
+				fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:"
 					"Seq Id requires an Id.\n");
 				return FALSE;
 			}
 		}
 		else
 		{
-			fprintf(stderr,"Qli50 Send Results:Parse_Arguments:argument '%s' not recognized.\n",
+			fprintf(stderr,"Qli50 Monitor Weather:Parse_Arguments:argument '%s' not recognized.\n",
 				argv[i]);
 			return FALSE;
 		}			
@@ -273,13 +291,13 @@ static int Parse_Arguments(int argc, char *argv[])
  */
 static void Help(void)
 {
-	fprintf(stdout,"Qli50 Send Results:Help.\n");
-	fprintf(stdout,"Qli50 Send Results sends an send results command to the Qli50.\n");
-	fprintf(stdout,"qli50_command_send_results [-serial_device|-se <filename>][-qli50_id <id>][-seq_id <id>]\n");
+	fprintf(stdout,"Qli50 Monitor Weather:Help.\n");
+	fprintf(stdout,"Qli50 Monitor Weather loops over sending a read sensor command followed by a send results command to the Qli50.\n");
+	fprintf(stdout,"qli50_monitor_weather [-serial_device|-se <filename>][-qli50_id <id>][-seq_id <id>]\n");
 	fprintf(stdout,"\t[-l[og_level] <number>][-h[elp]]\n");
 	fprintf(stdout,"\n");
-	fprintf(stdout,"\t-qli50_id sets the QLI50 Id parameter to the send results command - this should be a single letter.\n");
-	fprintf(stdout,"\t-seq_id sets the sequence Id parameter to the send results command - this should be a single letter.\n");
+	fprintf(stdout,"\t-qli50_id sets the QLI50 Id parameter to the commands - this should be a single letter.\n");
+	fprintf(stdout,"\t-seq_id sets the sequence Id parameter to the commands - this should be a single letter.\n");
 	fprintf(stdout,"\t-serial_device specifies the serial device name.\n");
 	fprintf(stdout,"\te.g. /dev/ttyS0 for Linux.\n");
 	fprintf(stdout,"\t-log_level specifies the logging(0..5).\n");
