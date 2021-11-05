@@ -260,7 +260,15 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 
 	retval = TRUE;
 	Qli50_Wxt536_Error_Number = 0;
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
+				"Qli50_Wxt536_Wxt536_Read_Sensors invoked with qli_id '%c' and seq_id '%c'.",
+				qli_id,seq_id);
+#endif /* LOGGING */
 	/* read wind data */
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,"Reading Wxt536 wind data.");
+#endif /* LOGGING */
 	if(Wms_Wxt536_Command_Wind_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&wind_data))
 	{
 		Wxt536_Data.Wind_Data = wind_data;
@@ -273,6 +281,10 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 		retval = FALSE;
 	}
 	/* read pressure/temperature/humidity data */
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+				"Reading Wxt536 pressure/temperature/humidity data.");
+#endif /* LOGGING */
 	if(Wms_Wxt536_Command_Pressure_Temperature_Humidity_Data_Get("Wxt536","qli50_wxt536_wxt536.c",
 								     Wxt536_Device_Address,&pressure_temp_humidity_data))
 	{
@@ -287,6 +299,9 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 		retval = FALSE;
 	}
 	/* read rain data */
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,"Reading Wxt536 rain data.");
+#endif /* LOGGING */
 	if(Wms_Wxt536_Command_Precipitation_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&rain_data))
 	{
 		Wxt536_Data.Rain_Data = rain_data;
@@ -299,6 +314,9 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 		retval = FALSE;
 	}
 	/* read supervisor data (internal temperatures/voltages) */
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,"Reading Wxt536 supervisor data.");
+#endif /* LOGGING */
 	if(Wms_Wxt536_Command_Supervisor_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&supervisor_data))
 	{
 		Wxt536_Data.Supervisor_Data = supervisor_data;
@@ -311,6 +329,9 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 		retval = FALSE;
 	}
 	/* read external analogue data (external rain sensor/pyranometer) */
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,"Reading Wxt536 analogue data.");
+#endif /* LOGGING */
 	if(Wms_Wxt536_Command_Analogue_Data_Get("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,&analogue_data))
 	{
 		Wxt536_Data.Analogue_Data = analogue_data;
@@ -356,11 +377,15 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 {
 	struct timespec current_time;
 
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
+				"Qli50_Wxt536_Wxt536_Send_Results invoked with qli_id '%c' and seq_id '%c'.",
+				qli_id,seq_id);
+#endif /* LOGGING */
 	/* get the current time */
 	clock_gettime(CLOCK_REALTIME,&current_time);
-
 	/* pressure/temperature/humidity */
-	if(fdifftime(Wxt536_Data.Pressure_Temp_Humidity_Timestamp,current_time) < Max_Datum_Age)
+	if(fdifftime(current_time,Wxt536_Data.Pressure_Temp_Humidity_Timestamp) < Max_Datum_Age)
 	{
 		/* air temperature in degrees centigrade. */
 		data->Temperature.Type = DATA_TYPE_DOUBLE;
@@ -374,9 +399,21 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		/* Calculate the Dew point from the temperature and relative humidity */
 		data->Dew_Point.Type = DATA_TYPE_DOUBLE;
 		data->Dew_Point.Value.DValue = Wxt536_Calculate_Dew_Point(Wxt536_Data.Pressure_Temp_Humidity_Data);
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+	   "Qli50_Wxt536_Wxt536_Send_Results: Dew point %.2f C calculated from Air temperature %.2f C and Humidity %.2f %.",
+					data->Dew_Point.Value.DValue,
+					Wxt536_Data.Pressure_Temp_Humidity_Data.Air_Temperature,
+					Wxt536_Data.Pressure_Temp_Humidity_Data.Relative_Humidity);
+#endif /* LOGGING */
 	}
 	else
 	{
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+			      "Qli50_Wxt536_Wxt536_Send_Results: Pressure/temperature/humidity data out of date (%.2f s).",
+			      fdifftime(current_time,Wxt536_Data.Pressure_Temp_Humidity_Timestamp));
+#endif /* LOGGING */
 		data->Temperature.Type = DATA_TYPE_ERROR;
 		data->Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 		data->Humidity.Type = DATA_TYPE_ERROR;
@@ -387,7 +424,7 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		data->Dew_Point.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
 	/* wind speed / direction */
-	if(fdifftime(Wxt536_Data.Wind_Timestamp,current_time) < Max_Datum_Age)
+	if(fdifftime(current_time,Wxt536_Data.Wind_Timestamp) < Max_Datum_Age)
 	{
 		/* wind speed in m/s, currently using wxt536's average value */
 		data->Wind_Speed.Type = DATA_TYPE_DOUBLE;
@@ -398,6 +435,11 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 	}
 	else
 	{
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+			      "Qli50_Wxt536_Wxt536_Send_Results: Wind data out of date (%.2f s).",
+			      fdifftime(current_time,Wxt536_Data.Wind_Timestamp));
+#endif /* LOGGING */
 		data->Wind_Speed.Type = DATA_TYPE_ERROR;
 		data->Wind_Speed.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 		data->Wind_Direction.Type = DATA_TYPE_ERROR;
@@ -413,20 +455,30 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 	** I cannot reconcile this against the DRD11A documentation/QLI50 config however. */
 	Wxt536_Analogue_Surface_Wet_Set(current_time,&(data->Analogue_Surface_Wet));
 	/* pyranometer */
-	if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
+	if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
 	{
 		/* the Wxt536 pyranometer is connected to the analogue input. The Solar_Radiation_Voltage is in
 		** volts (multiplied by the gain).
 		** The Qli50 supplies Light as an integer, in Watts per metre squared. */
 		data->Light.Type = DATA_TYPE_INT;
 		data->Light.Value.IValue = Wxt536_Pyranometer_Volts_To_Watts_M2(Wxt536_Data.Analogue_Data.Solar_Radiation_Voltage);
+#if LOGGING > 5
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+			      "Qli50_Wxt536_Wxt536_Send_Results: Pyranometer %d W/m^2 from %.2v.",
+					data->Light.Value.IValue,Wxt536_Data.Analogue_Data.Solar_Radiation_Voltage);
+#endif /* LOGGING */
 	}
 	else
 	{
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+			      "Qli50_Wxt536_Wxt536_Send_Results: Pyranometer data out of date (%.2f s).",
+			      fdifftime(current_time,Wxt536_Data.Analogue_Timestamp));
+#endif /* LOGGING */
 		data->Light.Type = DATA_TYPE_ERROR;
 		data->Light.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
-	if(fdifftime(Wxt536_Data.Supervisor_Timestamp,current_time) < Max_Datum_Age)
+	if(fdifftime(current_time,Wxt536_Data.Supervisor_Timestamp) < Max_Datum_Age)
 	{
 		/* QLI50 internal voltage is the primary power voltage - which is the Wxt536 supply voltage */
 		data->Internal_Voltage.Type = DATA_TYPE_DOUBLE;
@@ -434,6 +486,11 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 	}
 	else
 	{
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+			      "Qli50_Wxt536_Wxt536_Send_Results: Internal data out of date (%.2f s).",
+			      fdifftime(current_time,Wxt536_Data.Supervisor_Timestamp));
+#endif /* LOGGING */
 		data->Internal_Voltage.Type = DATA_TYPE_ERROR;
 		data->Internal_Voltage.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
@@ -507,7 +564,7 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 					   struct Wms_Qli50_Data_Value *digital_surface_wet_value)
 {
 	/* if the precipitation timestamp is new enough use precipitation */
-	if(fdifftime(Wxt536_Data.Rain_Timestamp,current_time) < Max_Datum_Age)
+	if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
 	{
 		if((Wxt536_Data.Rain_Data.Rain_Intensity > 0)||(Wxt536_Data.Rain_Data.Hail_Intensity > 0))
 		{
@@ -521,7 +578,7 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 		}
 	}
 	/* if the analogue timestamp is new enough use the DRD11A */
-	else if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
+	else if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
 	{
 		/* The DRD11A is connected to the Ultrasonic Level analogue input.
 		** This should read 3v fully wet, 1v fully dry. */
@@ -566,7 +623,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 {
 	
 	/* if the analogue timestamp is new enough use the DRD11A */
-	if(fdifftime(Wxt536_Data.Analogue_Timestamp,current_time) < Max_Datum_Age)
+	if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
 	{
 		/* The DRD11A is connected to the Ultrasonic Level analogue input.
 		** This should read 3v fully wet, 1v fully dry. */
@@ -578,7 +635,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 			analogue_surface_wet_value->Value.IValue = 100;
 	}
 	/* if the precipitation timestamp is new enough use precipitation */
-	else if(fdifftime(Wxt536_Data.Rain_Timestamp,current_time) < Max_Datum_Age)
+	else if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
 	{
 		analogue_surface_wet_value->Type = DATA_TYPE_INT;
 		/* rain intensity is measured in mm/h. Scale so 1 mm/h is 100% and range check result */
