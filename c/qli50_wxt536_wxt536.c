@@ -35,6 +35,20 @@
  */
 #define FILENAME_LENGTH           (256)
 
+/* enums */
+/**
+ * Which sensor to use for measurement of some elements. One of:
+ * <ul>
+ * <li>SENSOR_TYPE_NONE
+ * <li>SENSOR_TYPE_WXT536
+ * <li>SENSOR_TYPE_DRD11A
+ * </ul>
+ */
+enum Sensor_Type_Enum
+{
+	SENSOR_TYPE_NONE, SENSOR_TYPE_WXT536, SENSOR_TYPE_DRD11A
+};
+
 /* internal structures */
 /**
  * Structure containing weather and system data read by the Wxt536, along with a timestamp describing when the 
@@ -110,8 +124,28 @@ static double Wxt536_Pyranometer_Gain = 100000.0;
  * for our current sensor.
  */
 static double CMP3_Pyranometer_Sensitivity = 30.95;
+/**
+ * Which sensor to use for measuring digital surface wet.
+ */
+static enum Sensor_Type_Enum Digital_Surface_Wet_Sensor;
+/**
+ * Which sensor to use for measuring digital surface wet.
+ */
+static enum Sensor_Type_Enum Analogue_Surface_Wet_Sensor;
+/**
+ * The DRD11A sensor reports 1v wet, 3v dry. What is the threshold, below which, we report 'wet' for the digital surface wet
+ * value?
+ */
+static double Digital_Surface_Wet_Drd11a_Threshold = 2.8;
+/**
+ * We use the Wxt536 rain intensity (in mm/h) when computing the analogue surface wetness in wxt536 mode, 
+ * and scale it (with range checking).
+ * A scale value of 100.0 means a rain intensity of 1mm/h converts to an analaogue wetness of 100%
+ */
+static double Analogue_Surface_Wet_Wxt536_Scale = 100.0;
 
 /* internal functions */
+static int Wxt536_Config_Sensor_Get(char *keyword,enum Sensor_Type_Enum *sensor);
 static double Wxt536_Calculate_Dew_Point(struct Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct pth_data);
 static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage);
 static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
@@ -136,6 +170,10 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * <li>We retrieve the Max_Datum_Age from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We retrieve the Wxt536_Pyranometer_Gain from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We retrieve the CMP3_Pyranometer_Sensitivity from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the Digital_Surface_Wet_Sensor from the config file using Wxt536_Config_Sensor_Get.
+ * <li>We retrieve the Analogue_Surface_Wet_Sensor from the config file using Wxt536_Config_Sensor_Get.
+ * <li>We retrieve the Digital_Surface_Wet_Drd11a_Threshold from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the Analogue_Surface_Wet_Wxt536_Scale from the config file using Qli50_Wxt536_Config_Double_Get.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
  *         Qli50_Wxt536_Error_String will be set with a suitable error.
@@ -145,6 +183,12 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * @see #Max_Datum_Age
  * @see #Wxt536_Pyranometer_Gain
  * @see #CMP3_Pyranometer_Sensitivity
+ * @see #Sensor_Type_Enum
+ * @see #Digital_Surface_Wet_Sensor
+ * @see #Analogue_Surface_Wet_Sensor
+ * @see #Digital_Surface_Wet_Drd11a_Threshold
+ * @see #Analogue_Surface_Wet_Wxt536_Scale
+ * @see #Wxt536_Config_Sensor_Get
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
  * @see qli50_wxt536_config.html#Qli50_Wxt536_Config_String_Get
@@ -207,6 +251,19 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 	/* get the CMP3 pyranometer sensitivity in uV/W/m^2*/
 	if(!Qli50_Wxt536_Config_Double_Get("cmp3.pyranometer.sensitivity",&CMP3_Pyranometer_Sensitivity))
 		return FALSE;
+	/* get which sensor to use for the digital surface wet determination */
+	if(!Wxt536_Config_Sensor_Get("digital.surface.wet.sensor",&Digital_Surface_Wet_Sensor))
+		return FALSE;
+	/* get which sensor to use for the analogue surface wet determination */
+	if(!Wxt536_Config_Sensor_Get("analogue.surface.wet.sensor",&Analogue_Surface_Wet_Sensor))
+		return FALSE;
+	/* get the digital surface wet drd11a threashold in volts */
+	if(!Qli50_Wxt536_Config_Double_Get("digital.surface.wet.drd11a.threshold",&Digital_Surface_Wet_Drd11a_Threshold))
+		return FALSE;
+	/* get the analogue surface wet wxt536 scaling factor */
+	if(!Qli50_Wxt536_Config_Double_Get("analogue.surface.wet.wxt536.scale",&Analogue_Surface_Wet_Wxt536_Scale))
+		return FALSE;
+	
 	return TRUE;
 }
 
@@ -511,6 +568,53 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 ** internal functions 
 ** ======================================================= */
 /**
+ * Routine to retrieve a sensor type from the config file.
+ * @param keyword The keyword with a sensor type value.
+ * @param sensor The address of an instance of a Sensor_Type_Enum enum, to hold the parsed sensor.
+ * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
+ *         Qli50_Wxt536_Error_String will be set with a suitable error.
+ * @see #Sensor_Type_Enum
+ * @see qli50_wxt536_config.html#Qli50_Wxt536_Config_String_Get
+ * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
+ * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
+ */
+static int Wxt536_Config_Sensor_Get(char *keyword,enum Sensor_Type_Enum *sensor)
+{
+	char sensor_string[32];
+	
+	if(keyword == NULL)
+	{
+		Qli50_Wxt536_Error_Number = 210;
+		sprintf(Qli50_Wxt536_Error_String,"Wxt536_Config_Sensor_Get:keyword is NULL.");
+		return FALSE;
+	}
+	if(sensor == NULL)
+	{
+		Qli50_Wxt536_Error_Number = 211;
+		sprintf(Qli50_Wxt536_Error_String,"Wxt536_Config_Sensor_Get:sensor is NULL.");
+		return FALSE;
+	}
+	if(!Qli50_Wxt536_Config_String_Get(keyword,sensor_string,31))
+		return FALSE;
+	if(strcmp(sensor_string,"wxt536") == 0)
+	{
+		(*sensor) = SENSOR_TYPE_WXT536;
+	}
+	else if(strcmp(sensor_string,"drd11a") == 0)
+	{
+		(*sensor) = SENSOR_TYPE_DRD11A;
+	}
+	else
+	{
+		Qli50_Wxt536_Error_Number = 212;
+		sprintf(Qli50_Wxt536_Error_String,
+			"Wxt536_Config_Sensor_Get:keyword '%s' contained illegal sensor value '%s'.",keyword,sensor_string);
+		return FALSE;
+	}
+	return TRUE;
+}
+
+/**
  * Routine to calculate the dew point based on the temperature and relative humidity.
  * This is based on the QLI50 formula, documented in the QLI50 manual, P62 'TDEW Calculation Channel'.
  * @param pth_data An instance of Wxt536_Command_Pressure_Temperature_Humidity_Data_Struct containing
@@ -567,6 +671,8 @@ static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
  * @see #Wxt536_Data
  * @see #Wxt536_Data_Struct
  * @see #Max_Datum_Age
+ * @see #Digital_Surface_Wet_Sensor
+ * @see #Digital_Surface_Wet_Drd11a_Threshold
  * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
  * @see ../qli50/cdocs/wms_qli50_command.html#Wms_Qli50_Data_Value
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Precipitation_Data_Get
@@ -575,52 +681,73 @@ static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
 static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 					   struct Wms_Qli50_Data_Value *digital_surface_wet_value)
 {
-	/* if the precipitation timestamp is new enough use precipitation */
-	if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
+	/* do we want to use the wxt536 piezo sensor to determine this? */
+	if(Digital_Surface_Wet_Sensor == SENSOR_TYPE_WXT536)
 	{
+		/* if the precipitation timestamp is new enough use precipitation */
+		if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
+		{
 #if LOGGING > 1
-		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
-					"Wxt536_Digital_Surface_Wet_Set:"
-		   "Using Wxt536 Piezzo rain sensor with rain intensity %.2f mm/h and hail intensity %.2f hits/cm^2h.",
-					Wxt536_Data.Rain_Data.Rain_Intensity,Wxt536_Data.Rain_Data.Hail_Intensity);
+			Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+						"Wxt536_Digital_Surface_Wet_Set:"
+						"Using Wxt536 Piezo rain sensor with rain intensity %.2f mm/h "
+						"and hail intensity %.2f hits/cm^2h.",
+						Wxt536_Data.Rain_Data.Rain_Intensity,Wxt536_Data.Rain_Data.Hail_Intensity);
 #endif /* LOGGING */
 		
-		if((Wxt536_Data.Rain_Data.Rain_Intensity > 0.0)||(Wxt536_Data.Rain_Data.Hail_Intensity > 0.0))
-		{
-			digital_surface_wet_value->Type = DATA_TYPE_INT;
-			digital_surface_wet_value->Value.IValue = 0; /* wet */
+			if((Wxt536_Data.Rain_Data.Rain_Intensity > 0.0)||(Wxt536_Data.Rain_Data.Hail_Intensity > 0.0))
+			{
+				digital_surface_wet_value->Type = DATA_TYPE_INT;
+				digital_surface_wet_value->Value.IValue = 0; /* wet */
+			}
+			else
+			{
+				digital_surface_wet_value->Type = DATA_TYPE_INT;
+				digital_surface_wet_value->Value.IValue = 4; /* dry */
+			}
 		}
 		else
 		{
-			digital_surface_wet_value->Type = DATA_TYPE_INT;
-			digital_surface_wet_value->Value.IValue = 4; /* dry */
+			/* we have no up to date measurement */
+			digital_surface_wet_value->Type = DATA_TYPE_ERROR;
+			digital_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 		}
 	}
-	/* if the analogue timestamp is new enough use the DRD11A */
-	else if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
+	/* do we want to use the drd11a sensor to determine this? */
+	else if(Digital_Surface_Wet_Sensor == SENSOR_TYPE_DRD11A)
 	{
-#if LOGGING > 1
-		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
-					"Wxt536_Digital_Surface_Wet_Set:"
-					"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet).",
-					Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage);
-#endif /* LOGGING */
-		/* The DRD11A is connected to the Ultrasonic Level analogue input.
-		** This should read 3v fully dry, 1v fully wet. */
-		if(Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage < 2.8)
+		/* if the analogue timestamp is new enough use the DRD11A */
+		if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
 		{
-			digital_surface_wet_value->Type = DATA_TYPE_INT;
-			digital_surface_wet_value->Value.IValue = 0; /* wet */
+#if LOGGING > 1
+			Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+						"Wxt536_Digital_Surface_Wet_Set:"
+						"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet).",
+						Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage);
+#endif /* LOGGING */
+			/* The DRD11A is connected to the Ultrasonic Level analogue input.
+			** This should read 3v fully dry, 1v fully wet. */
+			if(Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage < Digital_Surface_Wet_Drd11a_Threshold)
+			{
+				digital_surface_wet_value->Type = DATA_TYPE_INT;
+				digital_surface_wet_value->Value.IValue = 0; /* wet */
+			}
+			else
+			{
+				digital_surface_wet_value->Type = DATA_TYPE_INT;
+				digital_surface_wet_value->Value.IValue = 4; /* dry */
+			}
 		}
 		else
 		{
-			digital_surface_wet_value->Type = DATA_TYPE_INT;
-			digital_surface_wet_value->Value.IValue = 4; /* dry */
+			/* we have no up to date measurement */
+			digital_surface_wet_value->Type = DATA_TYPE_ERROR;
+			digital_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 		}
 	}
 	else
 	{
-		/* we have no up to date measurement */
+		/* we don't know what sensor to use for this datum */
 		digital_surface_wet_value->Type = DATA_TYPE_ERROR;
 		digital_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
@@ -638,6 +765,8 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
  * @see #Wxt536_Data
  * @see #Wxt536_Data_Struct
  * @see #Max_Datum_Age
+ * @see #Analogue_Surface_Wet_Sensor
+ * @see #Analogue_Surface_Wet_Wxt536_Scale
  * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
  * @see ../qli50/cdocs/wms_qli50_command.html#Wms_Qli50_Data_Value
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Precipitation_Data_Get
@@ -646,47 +775,69 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 					    struct Wms_Qli50_Data_Value *analogue_surface_wet_value)
 {
-	
-	/* if the analogue timestamp is new enough use the DRD11A */
-	if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
+	/* do we want to use the drd11a sensor to determine this? */
+	if(Analogue_Surface_Wet_Sensor == SENSOR_TYPE_DRD11A)
 	{
-		/* The DRD11A is connected to the Ultrasonic Level analogue input.
-		** This should read 3v fully dry, 1v fully wet. */
-		analogue_surface_wet_value->Type = DATA_TYPE_INT;
-		analogue_surface_wet_value->Value.IValue = 100-(int)((Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage-1.0)*50.0);
-		if(analogue_surface_wet_value->Value.IValue < 0)
-			analogue_surface_wet_value->Value.IValue = 0;
-		if(analogue_surface_wet_value->Value.IValue > 100)
-			analogue_surface_wet_value->Value.IValue = 100;
+		/* if the analogue timestamp is new enough use the DRD11A */
+		if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
+		{
+			/* The DRD11A is connected to the Ultrasonic Level analogue input.
+			** This should read 3v fully dry, 1v fully wet. */
+			analogue_surface_wet_value->Type = DATA_TYPE_INT;
+			analogue_surface_wet_value->Value.IValue = 100-(int)((Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage-1.0)*50.0);
+			if(analogue_surface_wet_value->Value.IValue < 0)
+				analogue_surface_wet_value->Value.IValue = 0;
+			if(analogue_surface_wet_value->Value.IValue > 100)
+				analogue_surface_wet_value->Value.IValue = 100;
 #if LOGGING > 1
-		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
-					"Wxt536_Analogue_Surface_Wet_Set:"
-					"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet) giving value %d %%.",
-					Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage,
-					analogue_surface_wet_value->Value.IValue);
+			Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+						"Wxt536_Analogue_Surface_Wet_Set:"
+						"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet) giving value %d %%.",
+						Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage,
+						analogue_surface_wet_value->Value.IValue);
 #endif /* LOGGING */
+		}
+		else
+		{
+			/* we have no up to date measurement */
+			analogue_surface_wet_value->Type = DATA_TYPE_ERROR;
+			analogue_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+		}
 	}
-	/* if the precipitation timestamp is new enough use precipitation */
-	else if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
+	/* do we want to use the wxt536 piezo sensor to determine this? */
+	else if(Analogue_Surface_Wet_Sensor == SENSOR_TYPE_WXT536)
 	{
-		analogue_surface_wet_value->Type = DATA_TYPE_INT;
-		/* rain intensity is measured in mm/h. Scale so 1 mm/h is 100% and range check result */
-		analogue_surface_wet_value->Value.IValue = (int)(Wxt536_Data.Rain_Data.Rain_Intensity*100.0);
-		if(analogue_surface_wet_value->Value.IValue < 0)
-			analogue_surface_wet_value->Value.IValue = 0;
-		if(analogue_surface_wet_value->Value.IValue > 100)
-			analogue_surface_wet_value->Value.IValue = 100;
+		/* if the precipitation timestamp is new enough use precipitation */
+		if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
+		{
+			analogue_surface_wet_value->Type = DATA_TYPE_INT;
+			/* rain intensity is measured in mm/h. We and scale it (with range checking) with 
+			** Analogue_Surface_Wet_Wxt536_Scale. A Analogue_Surface_Wet_Wxt536_Scale value of 100.0 
+			** means a rain intensity of 1mm/h converts to an analaogue wetness of 100%  */
+			analogue_surface_wet_value->Value.IValue = (int)(Wxt536_Data.Rain_Data.Rain_Intensity*
+									 Analogue_Surface_Wet_Wxt536_Scale);
+			if(analogue_surface_wet_value->Value.IValue < 0)
+				analogue_surface_wet_value->Value.IValue = 0;
+			if(analogue_surface_wet_value->Value.IValue > 100)
+				analogue_surface_wet_value->Value.IValue = 100;
 #if LOGGING > 1
-		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
-					"Wxt536_Analogue_Surface_Wet_Set:"
-					"Using Wxt536 Piezzo rain sensor with rain intensity %.3f mm/h giving value %d %%.",
-					Wxt536_Data.Rain_Data.Rain_Intensity,
-					analogue_surface_wet_value->Value.IValue);
+			Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+						"Wxt536_Analogue_Surface_Wet_Set:"
+						"Using Wxt536 Piezo rain sensor with rain intensity %.3f mm/h giving value %d %%.",
+						Wxt536_Data.Rain_Data.Rain_Intensity,
+						analogue_surface_wet_value->Value.IValue);
 #endif /* LOGGING */
+		}
+		else
+		{
+			/* we have no up to date measurement */
+			analogue_surface_wet_value->Type = DATA_TYPE_ERROR;
+			analogue_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+		}
 	}
 	else
 	{
-		/* we have no up to date measurement */
+		/* we don't know what sensor to use for this datum */
 		analogue_surface_wet_value->Type = DATA_TYPE_ERROR;
 		analogue_surface_wet_value->Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
