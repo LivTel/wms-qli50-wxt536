@@ -464,7 +464,7 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		data->Light.Value.IValue = Wxt536_Pyranometer_Volts_To_Watts_M2(Wxt536_Data.Analogue_Data.Solar_Radiation_Voltage);
 #if LOGGING > 5
 		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
-			      "Qli50_Wxt536_Wxt536_Send_Results: Pyranometer %d W/m^2 from %.2v.",
+			      "Qli50_Wxt536_Wxt536_Send_Results: Pyranometer %d W/m^2 from %.5f v.",
 					data->Light.Value.IValue,Wxt536_Data.Analogue_Data.Solar_Radiation_Voltage);
 #endif /* LOGGING */
 	}
@@ -541,7 +541,7 @@ static double Wxt536_Calculate_Dew_Point(struct Wxt536_Command_Pressure_Temperat
 static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
 {
 	/* The CMP3 Pyranometer Sensitivity is in uV/W/m^2 */
-	return (int)( (voltage/Wxt536_Pyranometer_Gain) / CMP3_Pyranometer_Sensitivity/1000000);
+	return (int)( (voltage/Wxt536_Pyranometer_Gain) / CMP3_Pyranometer_Sensitivity/1000000.0);
 }
 
 /**
@@ -566,7 +566,14 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 	/* if the precipitation timestamp is new enough use precipitation */
 	if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
 	{
-		if((Wxt536_Data.Rain_Data.Rain_Intensity > 0)||(Wxt536_Data.Rain_Data.Hail_Intensity > 0))
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+					"Wxt536_Digital_Surface_Wet_Set:"
+		   "Using Wxt536 Piezzo rain sensor with rain intensity %.2f mm/h and hail intensity %.2f hits/cm^2h.",
+					Wxt536_Data.Rain_Data.Rain_Intensity,Wxt536_Data.Rain_Data.Hail_Intensity);
+#endif /* LOGGING */
+		
+		if((Wxt536_Data.Rain_Data.Rain_Intensity > 0.0)||(Wxt536_Data.Rain_Data.Hail_Intensity > 0.0))
 		{
 			digital_surface_wet_value->Type = DATA_TYPE_INT;
 			digital_surface_wet_value->Value.IValue = 0; /* wet */
@@ -580,6 +587,12 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 	/* if the analogue timestamp is new enough use the DRD11A */
 	else if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
 	{
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+					"Wxt536_Digital_Surface_Wet_Set:"
+					"Using DRD11A rain sensor with voltage %.3f v (1v dry, 3v wet).",
+					Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage);
+#endif /* LOGGING */
 		/* The DRD11A is connected to the Ultrasonic Level analogue input.
 		** This should read 3v fully wet, 1v fully dry. */
 		if(Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage > 1.2)
@@ -633,6 +646,13 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 			analogue_surface_wet_value->Value.IValue = 0;
 		if(analogue_surface_wet_value->Value.IValue > 100)
 			analogue_surface_wet_value->Value.IValue = 100;
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+					"Wxt536_Analogue_Surface_Wet_Set:"
+					"Using DRD11A rain sensor with voltage %.3f v (1v dry, 3v wet) giving value %d %%.",
+					Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage,
+					analogue_surface_wet_value->Value.IValue);
+#endif /* LOGGING */
 	}
 	/* if the precipitation timestamp is new enough use precipitation */
 	else if(fdifftime(current_time,Wxt536_Data.Rain_Timestamp) < Max_Datum_Age)
@@ -644,6 +664,13 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 			analogue_surface_wet_value->Value.IValue = 0;
 		if(analogue_surface_wet_value->Value.IValue > 100)
 			analogue_surface_wet_value->Value.IValue = 100;
+#if LOGGING > 1
+		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
+					"Wxt536_Analogue_Surface_Wet_Set:"
+					"Using Wxt536 Piezzo rain sensor with rain intensity %.3f mm/h giving value %d %%.",
+					Wxt536_Data.Rain_Data.Rain_Intensity,
+					analogue_surface_wet_value->Value.IValue);
+#endif /* LOGGING */
 	}
 	else
 	{
