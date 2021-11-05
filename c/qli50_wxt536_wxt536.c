@@ -550,7 +550,7 @@ static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
 	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
 				"Wxt536_Pyranometer_Volts_To_Watts_M2:"
 				"Pyranometer voltage %.3f v, gain %.3f, sensitivity %.3f uV/W/m^2, "
-				"a = %.3f, b = %.3f, light = %d W / M^2.",voltage,Wxt536_Pyranometer_Gain,
+				"a = %.6f, b = %.6f, light = %d W / M^2.",voltage,Wxt536_Pyranometer_Gain,
 				CMP3_Pyranometer_Sensitivity,a,b,light);
 #endif /* LOGGING */
 	return light;
