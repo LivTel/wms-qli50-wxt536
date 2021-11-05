@@ -175,7 +175,8 @@ struct Wxt536_Command_Supervisor_Data_Struct
  * <dt>Aux_Rain_Accumulation</dt> <dd>A double representing auxiliary rain accumulation in mm. 
  *                                We do not have this sensor connected to our unit.</dd>
  * <dt>Ultrasonic_Level_Voltage</dt> <dd>A double representing the ultrasonic level input voltage in Volts
- *                                   (multiplied by the gain). We have a DRD11A rain sensor attached to this input.</dd>
+ *                                   (multiplied by the gain). We have a DRD11A rain sensor attached to this input.
+ *                                   This returns 3v when dry, and 1v when fully wet.</dd>
  * <dt>Solar_Radiation_Voltage</dt> <dd>A double representing the voltage returned by the pyranometer 
  *                                  (in Volts multiplied by the gain)</dd>
  * </dl>

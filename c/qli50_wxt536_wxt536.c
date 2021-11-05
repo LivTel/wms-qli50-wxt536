@@ -450,9 +450,8 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 	** Rain is held on for 2 minutes. 
 	** Basically, should be 0v when wet, and 5v when dry. */
 	Wxt536_Digital_Surface_Wet_Set(current_time,&(data->Digital_Surface_Wet));
-	/* analogue surface wetness, valid range 0..10. Actual DRD11A is 3v fully wet, 1v fully dry
-	** I think it's actually in percent, therefore 0..10% count as dry, above that it's wet
-	** I cannot reconcile this against the DRD11A documentation/QLI50 config however. */
+	/* analogue surface wetness, valid range 0..10. Actual DRD11A is 1v fully wet, 3v fully dry
+	** I think it's actually in percent, therefore 0..10% count as dry, above that it's wet */
 	Wxt536_Analogue_Surface_Wet_Set(current_time,&(data->Analogue_Surface_Wet));
 	/* pyranometer */
 	if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
@@ -590,12 +589,12 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 #if LOGGING > 1
 		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
 					"Wxt536_Digital_Surface_Wet_Set:"
-					"Using DRD11A rain sensor with voltage %.3f v (1v dry, 3v wet).",
+					"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet).",
 					Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage);
 #endif /* LOGGING */
 		/* The DRD11A is connected to the Ultrasonic Level analogue input.
-		** This should read 3v fully wet, 1v fully dry. */
-		if(Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage > 1.2)
+		** This should read 3v fully dry, 1v fully wet. */
+		if(Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage < 2.8)
 		{
 			digital_surface_wet_value->Type = DATA_TYPE_INT;
 			digital_surface_wet_value->Value.IValue = 0; /* wet */
@@ -639,9 +638,9 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 	if(fdifftime(current_time,Wxt536_Data.Analogue_Timestamp) < Max_Datum_Age)
 	{
 		/* The DRD11A is connected to the Ultrasonic Level analogue input.
-		** This should read 3v fully wet, 1v fully dry. */
+		** This should read 3v fully dry, 1v fully wet. */
 		analogue_surface_wet_value->Type = DATA_TYPE_INT;
-		analogue_surface_wet_value->Value.IValue = (int)((Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage-1.0)*50.0);
+		analogue_surface_wet_value->Value.IValue = 100-(int)((Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage-1.0)*50.0);
 		if(analogue_surface_wet_value->Value.IValue < 0)
 			analogue_surface_wet_value->Value.IValue = 0;
 		if(analogue_surface_wet_value->Value.IValue > 100)
@@ -649,7 +648,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 #if LOGGING > 1
 		Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
 					"Wxt536_Analogue_Surface_Wet_Set:"
-					"Using DRD11A rain sensor with voltage %.3f v (1v dry, 3v wet) giving value %d %%.",
+					"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet) giving value %d %%.",
 					Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage,
 					analogue_surface_wet_value->Value.IValue);
 #endif /* LOGGING */
