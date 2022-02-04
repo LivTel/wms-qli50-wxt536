@@ -1,0 +1,16 @@
+#!/bin/tcsh
+set serial_device = /dev/ttyS0
+set device_address = 0
+set log_level = 0
+# CMP3 sensor sensitivity in uV/W/m^2 (from sticker on sensor)
+set sensitivity = 30.95
+cd ~dev/bin/wms-qli50-wxt536/wxt536/test/x86_64-linux
+set gain = `./wxt536_command_solar_radiation_gain_get -serial_device ${serial_device} -device_address ${device_address} -log_level ${log_level} | grep "The solar radiation sensor gain is" | sed "s/The solar radiation sensor gain is \(.*\)\./\1/g"`
+set gain_voltage = `./wxt536_command_analogue_data_get -serial_device /dev/ttyS0 -device_address 0 | grep "Solar Radiation Voltage" | sed "s/Solar Radiation Voltage \(.*\) V./\1/g"`
+echo "Sensor returning ${gain_voltage} V with gain ${gain}."
+set actual_voltage = `echo "scale = 6; ( ${gain_voltage} / ${gain} )" | /usr/bin/bc`
+echo "Actual voltage = ${actual_voltage} V"
+set micro_voltage = `echo "scale = 6; ( ${actual_voltage} * 1000000 )" | /usr/bin/bc`
+echo "Actual voltage = ${micro_voltage} uV"
+set w_per_m_sqaured = `echo "scale = 6; ( ${micro_voltage} / ${sensitivity} )" | /usr/bin/bc`
+echo "Solar Radiation= ${w_per_m_sqaured} W/M^2."
