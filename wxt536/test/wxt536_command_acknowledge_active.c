@@ -207,8 +207,8 @@ static int Parse_Arguments(int argc, char *argv[])
 static void Help(void)
 {
 	fprintf(stdout,"Wxt536 Acknowledge Active:Help.\n");
-	fprintf(stdout,"Wxt536 Acknowledge Active queries the Vaisala Wxt536 and gets it's device address.\n");
-	fprintf(stdout,"wxt536_command_device_address_get [-serial_device|-se <filename>][-d[evice_address] <character>]\n");
+	fprintf(stdout,"Wxt536 Acknowledge Active checks the Vaisala Wxt536 with the specified device address is active.\n");
+	fprintf(stdout,"wxt536_command_acknowledge_active [-serial_device|-se <filename>][-d[evice_address] <character>]\n");
 	fprintf(stdout,"\t[-l[og_level] <number>][-h[elp]]\n");
 	fprintf(stdout,"\n");
 	fprintf(stdout,"\t-serial_device specifies the serial device name.\n");
