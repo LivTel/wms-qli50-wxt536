@@ -664,6 +664,7 @@ static int Wxt536_Pyranometer_Volts_To_Watts_M2(double voltage)
  * Routine to set the digital surface wet value based on the Wxt536 precipitation data and Wxt536 analogue data (with DRD11A
  * rain sensor attached).
  * We think the QLI50 digital surface wet value should be 0v when wet, and 5v when dry.
+ * We will replace that (when using the Wxt536 piezzo sensor) with the Rain intensity in mm/h.
  * @param current_time An instance of struct timespec representing the current time, we use this to compare
  *        with the data timestamps to ensure the data has not gone out of date.
  * @param digital_surface_wet_value The instance of Wms_Qli50_Data_Value to fill in with the QLI50 digital surface wet
@@ -694,17 +695,20 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 						"and hail intensity %.2f hits/cm^2h.",
 						Wxt536_Data.Rain_Data.Rain_Intensity,Wxt536_Data.Rain_Data.Hail_Intensity);
 #endif /* LOGGING */
-		
+			/* digital surface wetness type was INT, can I arbitarily change it to DOUBLE? */
+			digital_surface_wet_value->Type = DATA_TYPE_DOUBLE;
+			digital_surface_wet_value->Value.DValue = Wxt536_Data.Rain_Data.Rain_Intensity;
+			/*
 			if((Wxt536_Data.Rain_Data.Rain_Intensity > 0.0)||(Wxt536_Data.Rain_Data.Hail_Intensity > 0.0))
 			{
 				digital_surface_wet_value->Type = DATA_TYPE_INT;
-				digital_surface_wet_value->Value.IValue = 0; /* wet */
-			}
+				digital_surface_wet_value->Value.IValue = 0;*/ /* wet */
+			/*}
 			else
 			{
 				digital_surface_wet_value->Type = DATA_TYPE_INT;
-				digital_surface_wet_value->Value.IValue = 4; /* dry */
-			}
+				digital_surface_wet_value->Value.IValue = 4;*/ /* dry */
+			/*}*/
 		}
 		else
 		{
