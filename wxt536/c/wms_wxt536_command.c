@@ -17,6 +17,7 @@
 #define _POSIX_C_SOURCE 199309L
 
 #include <errno.h>   /* Error number definitions */
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -525,6 +526,56 @@ int Wms_Wxt536_Command_Solar_Radiation_Gain_Get(char *class,char *source,char de
 	** return data structure */
 	if(!Wxt536_Parse_Parameter(class,source,"G","%lf",parameter_value_list,parameter_value_count,gain))
 		return FALSE;
+	return TRUE;
+}
+
+/**
+ * Routine to set the solar radiation gain for the Wxt536 with the specified device_address.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536 
+ *        (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param gain The new gain to use.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Solar_Radiation_Gain_Set(char *class,char *source,char device_address,double gain)
+{
+	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
+	char command_string[256];
+	char reply_string[256];
+	int parameter_value_count;
+	double returned_gain;
+	
+	Wms_Wxt536_Error_Number = 0;
+	sprintf(command_string,"%cIB,G=%.3f",device_address,gain);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	/* parse the reply string into keyword/value pairs */
+	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
+		return FALSE;
+	/* Extract the relevant parameters from the parameter_value_list, parse them and store them in the
+	** return data structure */
+	if(!Wxt536_Parse_Parameter(class,source,"G","%lf",parameter_value_list,parameter_value_count,&returned_gain))
+		return FALSE;
+	/* check the returned gain is the one we are trying to set */
+	if(fabs(gain-returned_gain) > 0.1)
+	{
+		Wms_Wxt536_Error_Number = 129;
+		sprintf(Wms_Wxt536_Error_String,
+			"Wms_Wxt536_Command_Solar_Radiation_Gain_Set:gain was not set (%.3f vs %.3f).",
+			gain,returned_gain);
+		return FALSE;		
+	}
 	return TRUE;
 }
 
