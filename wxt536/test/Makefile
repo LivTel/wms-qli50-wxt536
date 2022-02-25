@@ -17,7 +17,9 @@ CFLAGS = -g $(CCHECKFLAG) $(SHARED_LIB_CFLAGS) -I$(INCDIR) -I$(SERIAL_INCDIR) \
 
 DOCFLAGS = -static
 SRCS 		= 	wxt536_send_command.c wxt536_command_device_address_get.c wxt536_command_acknowledge_active.c \
-			wxt536_command_comms_settings_get.c wxt536_command_comms_protocol_set.c wxt536_command_reset.c \
+			wxt536_command_comms_settings_get.c wxt536_command_comms_protocol_set.c \
+			wxt536_command_reset.c wxt536_command_reset_precipitation_counter.c \
+			wxt536_command_reset_precipitation_intensity.c \
 			wxt536_command_solar_radiation_gain_get.c \
 			wxt536_command_wind_data_get.c wxt536_command_pressure_temperature_humidity_data_get.c \
 			wxt536_command_precipitation_data_get.c wxt536_command_supervisor_data_get.c \

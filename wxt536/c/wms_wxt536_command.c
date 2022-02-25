@@ -422,6 +422,66 @@ int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address)
 }
 
 /**
+ * Routine to reset the Wxt536 precipitation counter. This resets the rain and hail accumulation and duration parameters 
+ * Rc,Rd,Hc, and Hd.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536(can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Reset_Precipitation_Counter(char *class,char *source,char device_address)
+{
+	char command_string[256];
+	char reply_string[256];
+
+	Wms_Wxt536_Error_Number = 0;
+	sprintf(command_string,"%cXZRU",device_address);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	return TRUE;
+}
+
+/**
+ * Routine to reset the Wxt536 precipitation intensity. This resets the rain and hail intensity parameters 
+ * Ri, Rp, Hi and Hp.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536(can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Reset_Precipitation_Intensity(char *class,char *source,char device_address)
+{
+	char command_string[256];
+	char reply_string[256];
+
+	Wms_Wxt536_Error_Number = 0;
+	sprintf(command_string,"%cXZRI",device_address);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	return TRUE;
+}
+
+/**
  * Routine to query the Wxt536 with the specified device_address a command to retrieve the 
  * solar radiation sensor settings and parse the gain from it's reply.
  * @param class The class parameter for logging.
