@@ -169,6 +169,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * <li>We call Wms_Wxt536_Command_Comms_Settings_Protocol_Set to set the protocol to use with the Wxt536.
  * <li>We retrieve the Max_Datum_Age from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We retrieve the Wxt536_Pyranometer_Gain from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We configure the Wxt536 to use the pyranometer gain by calling Wms_Wxt536_Command_Solar_Radiation_Gain_Set.
  * <li>We retrieve the CMP3_Pyranometer_Sensitivity from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We retrieve the Digital_Surface_Wet_Sensor from the config file using Wxt536_Config_Sensor_Get.
  * <li>We retrieve the Analogue_Surface_Wet_Sensor from the config file using Wxt536_Config_Sensor_Get.
@@ -196,6 +197,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * @see ../wxt536/cdocs/wms_wxt536_connection.html#Wms_Wxt536_Connection_Open
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Device_Address_Get
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Comms_Settings_Protocol_Set
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Solar_Radiation_Gain_Set
  */
 int Qli50_Wxt536_Wxt536_Initialise(void)
 {
@@ -248,6 +250,16 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 	/* get the Wxt536 pyranometer gain */
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.pyranometer.gain",&Wxt536_Pyranometer_Gain))
 		return FALSE;
+	/* set the wxt536 to use the configured gain */
+	if(!Wms_Wxt536_Command_Solar_Radiation_Gain_Set("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,
+							Wxt536_Pyranometer_Gain))
+	{
+		Qli50_Wxt536_Error_Number = 213;
+		sprintf(Qli50_Wxt536_Error_String,"Qli50_Wxt536_Wxt536_Initialise: "
+			"Failed to set the pyranometer gain to '%.3f' for Wxt536 device address '%c'.",
+			Wxt536_Pyranometer_Gain,Wxt536_Device_Address);		
+		return FALSE;
+	}
 	/* get the CMP3 pyranometer sensitivity in uV/W/m^2*/
 	if(!Qli50_Wxt536_Config_Double_Get("cmp3.pyranometer.sensitivity",&CMP3_Pyranometer_Sensitivity))
 		return FALSE;
