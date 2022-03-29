@@ -138,6 +138,20 @@ static enum Sensor_Type_Enum Analogue_Surface_Wet_Sensor;
  */
 static double Digital_Surface_Wet_Drd11a_Threshold = 2.8;
 /**
+ * The DRD11A is attached to the ultrasonic level auxilary input on the wxt536.
+ * The DRD11A analogue voltage goes from 1v fully wet to 3v fully dry.
+ * Therefore the Analogue surface wet value (0..100) = 100-((Ultrasonic_Level_Voltage-(drd11a.wetpoint))*drd11a.scale)
+ * This value is the drd11a.wetpoint.
+ */
+static double Analogue_Surface_Wet_Drd11a_Wet_Point = 1.0;
+/**
+ * The DRD11A is attached to the ultrasonic level auxilary input on the wxt536.
+ * The DRD11A analogue voltage goes from 1v fully wet to 3v fully dry.
+ * Therefore the Analogue surface wet value (0..100) = 100-((Ultrasonic_Level_Voltage-(drd11a.wetpoint))*drd11a.scale)
+ * This value is the drd11a.scale.
+ */
+static double Analogue_Surface_Wet_Drd11a_Scale = 50.0;
+/**
  * We use the Wxt536 rain intensity (in mm/h) when computing the analogue surface wetness in wxt536 mode, 
  * and scale it (with range checking).
  * A scale value of 100.0 means a rain intensity of 1mm/h converts to an analaogue wetness of 100%
@@ -174,6 +188,8 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * <li>We retrieve the Digital_Surface_Wet_Sensor from the config file using Wxt536_Config_Sensor_Get.
  * <li>We retrieve the Analogue_Surface_Wet_Sensor from the config file using Wxt536_Config_Sensor_Get.
  * <li>We retrieve the Digital_Surface_Wet_Drd11a_Threshold from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the Analogue_Surface_Wet_Drd11a_Wet_Point from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the Analogue_Surface_Wet_Drd11a_Scale from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We retrieve the Analogue_Surface_Wet_Wxt536_Scale from the config file using Qli50_Wxt536_Config_Double_Get.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
@@ -188,6 +204,8 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * @see #Digital_Surface_Wet_Sensor
  * @see #Analogue_Surface_Wet_Sensor
  * @see #Digital_Surface_Wet_Drd11a_Threshold
+ * @see #Analogue_Surface_Wet_Drd11a_Wet_Point
+ * @see #Analogue_Surface_Wet_Drd11a_Scale
  * @see #Analogue_Surface_Wet_Wxt536_Scale
  * @see #Wxt536_Config_Sensor_Get
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
@@ -271,6 +289,12 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 		return FALSE;
 	/* get the digital surface wet drd11a threashold in volts */
 	if(!Qli50_Wxt536_Config_Double_Get("digital.surface.wet.drd11a.threshold",&Digital_Surface_Wet_Drd11a_Threshold))
+		return FALSE;
+	/* get the analogue surface wet drd11a wet-point voltage */
+	if(!Qli50_Wxt536_Config_Double_Get("analogue.surface.wet.drd11a.wetpoint",&Analogue_Surface_Wet_Drd11a_Wet_Point))
+		return FALSE;
+	/* get the analogue surface wet drd11a scaling factor */
+	if(!Qli50_Wxt536_Config_Double_Get("analogue.surface.wet.drd11a.scale",&Analogue_Surface_Wet_Drd11a_Scale))
 		return FALSE;
 	/* get the analogue surface wet wxt536 scaling factor */
 	if(!Qli50_Wxt536_Config_Double_Get("analogue.surface.wet.wxt536.scale",&Analogue_Surface_Wet_Wxt536_Scale))
@@ -782,6 +806,8 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
  * @see #Wxt536_Data_Struct
  * @see #Max_Datum_Age
  * @see #Analogue_Surface_Wet_Sensor
+ * @see #Analogue_Surface_Wet_Drd11a_Wet_Point
+ * @see #Analogue_Surface_Wet_Drd11a_Scale
  * @see #Analogue_Surface_Wet_Wxt536_Scale
  * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
  * @see ../qli50/cdocs/wms_qli50_command.html#Wms_Qli50_Data_Value
@@ -800,7 +826,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 			/* The DRD11A is connected to the Ultrasonic Level analogue input.
 			** This should read 3v fully dry, 1v fully wet. */
 			analogue_surface_wet_value->Type = DATA_TYPE_INT;
-			analogue_surface_wet_value->Value.IValue = 100-(int)((Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage-1.0)*50.0);
+			analogue_surface_wet_value->Value.IValue = 100-(int)((Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage-Analogue_Surface_Wet_Drd11a_Wet_Point)*Analogue_Surface_Wet_Drd11a_Scale);
 			if(analogue_surface_wet_value->Value.IValue < 0)
 				analogue_surface_wet_value->Value.IValue = 0;
 			if(analogue_surface_wet_value->Value.IValue > 100)
@@ -808,8 +834,10 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 #if LOGGING > 1
 			Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
 						"Wxt536_Analogue_Surface_Wet_Set:"
-						"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet) giving value %d %%.",
+						"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet), "
+						"using wet point %.3f v and scale %.2, giving value %d %%.",
 						Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage,
+						Analogue_Surface_Wet_Drd11a_Wet_Point,Analogue_Surface_Wet_Drd11a_Scale,
 						analogue_surface_wet_value->Value.IValue);
 #endif /* LOGGING */
 		}
