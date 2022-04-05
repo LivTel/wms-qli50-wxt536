@@ -35,6 +35,10 @@ set deployment_tar_dir 	= "${dev_dir}/public_html/wms-qli50-wxt536/deployment"
 set deployment_tar 	= "wms_qli50_wxt536_deployment_${machine_name}.tar"
 # name of install script
 set install_script      = wms_qli50_wxt536_tar_install
+# machine dependant config
+set init_d_dir          = "/etc/init.d"
+setenv GREP "/bin/grep"
+set bin_file_type = "ELF 64-bit LSB shared object"
 #
 # Clear old deployment.
 #
@@ -47,7 +51,7 @@ endif
 #
 echo "Creating directory structure..."
 set dir_count = 0
-set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_wms_dir} ${deployment_bin_dir} ${deployment_wms_dir}/tmp ${deployment_wms_dir}/tmp/log_archive ${deployment_wms_dir}/log ${deployment_wms_dir}/config ${deployment_bin_dir}/scripts ${deployment_bin_dir}/wms-qli50-wxt536/c/${HOSTTYPE} ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/test/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/autobooter/java "
+set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_wms_dir} ${deployment_bin_dir} ${deployment_wms_dir}/tmp ${deployment_wms_dir}/tmp/log_archive ${deployment_wms_dir}/log ${deployment_bin_dir}/scripts ${deployment_bin_dir}/wms-qli50-wxt536/c/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/qli50/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/wxt536/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/serial/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/scripts ${deployment_bin_dir}/wms-qli50-wxt536/config ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/test/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/autobooter/java "
 foreach dir ( ${dir_list} )
 	mkdir -p ${dir}
 	if ($status != 0) then
@@ -86,7 +90,7 @@ foreach jar ( ${jar_list} )
 		echo "${ident_string}" >>! ${deployment_tmp_dir}/ident_list.txt
 	end
 	if ( -r ${deployment_tmp_dir}/ident_list.txt) then
-		cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_icc_dir}/ident_list.txt 
+		cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_wms_dir}/ident_list.txt 
 	endif
 # keep track of number of jars processed
 	@ jar_count ++
@@ -121,7 +125,7 @@ foreach java_class_dir ( ${java_class_dir_list} )
 		@ java_class_file_count ++
 	end
 	if ( -r ${deployment_tmp_dir}/ident_list.txt) then
-		cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_icc_dir}/ident_list.txt 
+		cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_wms_dir}/ident_list.txt 
 	endif
 # keep track of number of java_class_dirs processed
 	@ java_class_dir_count ++
@@ -159,7 +163,7 @@ foreach clib ( ${clib_list} )
 	set ident_string = `cat ${deployment_tmp_dir}/ident.txt`
 	echo "${ident_string}" >>! ${deployment_tmp_dir}/ident_list.txt
 	if ( -r ${deployment_tmp_dir}/ident_list.txt) then
-		cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_icc_dir}/ident_list.txt 
+		cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_wms_dir}/ident_list.txt 
 	endif
 # keep track of number of clibs processed
 	@ clib_count ++
@@ -211,8 +215,79 @@ foreach dir ( ${dir_list} )
 	@ dir_count ++
 end
 if ( -r ${deployment_tmp_dir}/ident_list.txt) then
-	cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_icc_dir}/ident_list.txt 
+	cat ${deployment_tmp_dir}/ident_list.txt >>! ${deployment_wms_dir}/ident_list.txt 
 endif
 cd ${deployment_dir}
 rm -rf ${deployment_tmp_dir}
 echo "${dir_count} C test program directories copied, containg ${file_count} C test programs."
+#
+# Scripts
+#
+echo "Copying scripts..."
+set file_list = "bin/scripts/killhup.csh bin/wms-qli50-wxt536/scripts/wms_qli50_wxt536_engineering_mode"
+set file_count = 0
+cd ${dev_dir}
+foreach file ( ${file_list} )
+    set new_file = `echo ${file} | sed "s#${machine_name}\.##" | sed "s#${HOSTTYPE}\.##"`
+    cp ${dev_dir}/${file} ${deployment_wms_dir}/${new_file}
+    set cp_status = $status
+    if( ${cp_status} != 0 ) then
+	echo "Copy failed: ${dev_dir}/${file} to ${deployment_wms_dir}/${new_file}"
+	exit 4
+    endif
+    @ file_count ++
+end
+echo "${file_count} scripts copied."
+#
+# Configs
+#
+# in bin sub-directories
+echo "Copying machine configuration files..."
+set file_list = "wms-qli50-wxt536/config/qli50_wxt536.conf autobooter/java/${machine_name}.autobooter.properties "
+set file_count = 0
+cd ${dev_dir}
+foreach file ( ${file_list} )
+    set new_file = `echo ${file} | sed "s#${machine_name}.livjm.ac.uk.##" | sed "s#${machine_name}.##"`
+    cp ${dev_bin_dir}/${file} ${deployment_bin_dir}/${new_file}
+    set cp_status = $status
+    if( ${cp_status} != 0 ) then
+	echo "Copy failed: ${dev_bin_dir}/${file} to ${deployment_bin_dir}/${new_file}"
+	exit 5
+    endif
+    @ file_count ++
+end
+echo "${file_count} configuration files copied."
+#
+# /etc init scripts
+#
+echo "Copying Autobooter initialisation script."
+set from_file = "${dev_bin_dir}/autobooter/java/${machine_name}.autobooter"
+set to_file = "${deployment_dir}/${init_d_dir}/autobooter"
+cp  ${from_file} ${to_file}
+set cp_status = $status
+if( ${cp_status} != 0 ) then
+    echo "Copy failed: ${from_file} to ${to_file}"
+    exit 6
+endif
+#
+# Tidy deployment temp
+#
+cd ${deployment_dir}
+rm -rf ${deployment_tmp_dir}
+#
+# Create deployment tar
+#
+echo "--------------------------"
+echo "Creating deployment tar..."
+cd ${deployment_dir}
+tar cvf ${deployment_tar_dir}/${deployment_tar} .
+echo "GZipping deployment tar..."
+cd ${deployment_tar_dir}
+rm -f ${deployment_tar}.gz
+gzip ${deployment_tar}
+echo "Deployment tar : ${deployment_tar_dir}/${deployment_tar}.gz"
+echo "Installation script : ${current_dir}/${install_script}"
+rm -rf ${deployment_dir}
+echo "Download from http://ltdevsrv.livjm.ac.uk/~dev/wms-qli50-wxt536/deployment/index.html."
+echo "Download ${deployment_tar}.gz wms_qli50_wxt536_tar_install wms_qli50_wxt536_cshrc wms_qli50_wxt536_cshrc_edit.awk README.DEPLOYMENT"
+echo "Deployment ready."

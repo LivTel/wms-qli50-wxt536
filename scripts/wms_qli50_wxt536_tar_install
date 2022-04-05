@@ -1,0 +1,126 @@
+!/bin/csh
+# Install a deployment tar created by wms_qli50_wxt536_make_deployment
+# Usage:
+#	wms_qli50_wxt536_tar_install <machine>
+if ( ${#argv} != 1 ) then
+	echo "Please specify a deployment machine."
+	echo "$0 <machine>"
+	exit 1
+endif
+set machine_name = "$1"
+if ( "${machine_name}" == "-help") then
+	echo "$0 <machine>"
+	exit 0
+endif
+set current_dir         = `pwd`
+set wms-qli50-wxt536    = wms-qli50-wxt536
+set deployment_tar 	= "wms_qli50_wxt536_deployment_${machine_name}.tar"
+#
+# Ensure new installation files are not under /wms-qli50-wxt536 (which gets deleted)
+#
+echo "${current_dir}" | /bin/grep -q '/wms-qli50-wxt536'
+set grep_status = $status
+if( ${grep_status} == 0 ) then
+    echo "Installation files under /wms-qli50-wxt536. Move ALL file to ~eng/download/<date> and try again."
+    exit 1
+endif
+#
+# Check new installation is in current_dir
+#
+set file_list = "${deployment_tar}.gz wms_qli50_wxt536_cshrc wms_qli50_wxt536_cshrc_edit.awk"
+foreach file ( ${file_list} )
+    if( ! -e ${file} ) then
+        echo "Failed to find ${file}. New installation not ready to install."
+        exit 1
+    endif
+end
+#
+# Kill any running processes
+#
+if ( -x /wms_qli50_wxt536/bin/scripts/killhup.csh ) then
+    echo "Trying to kill AutoBooter."
+    /wms_qli50_wxt536/bin/scripts/killhup.csh AutoBooter
+    echo "Trying to kill qli50-wxt536."
+    /wms_qli50_wxt536/bin/scripts/killhup.csh qli50-wxt536
+else
+    echo "killhup not found:FAILED to stop running processess."
+endif
+#
+# Delete old installation
+# DON'T delete the log directory.
+#
+if( -d /${wms-qli50-wxt536}/bin ) then
+    echo "Deleting /${wms-qli50-wxt536}/bin directory."
+    rm -rf /${wms-qli50-wxt536}/bin/*
+endif
+#
+# Create new top level directory (if it does not already exist)
+#
+if( ! -d /${wms-qli50-wxt536} ) then
+    mkdir /${wms-qli50-wxt536}
+endif
+#
+# Extract new installation
+#
+echo "Copying deployment tar ${current_dir}/${deployment_tar}.gz to /."
+cp ${current_dir}/${deployment_tar}.gz /
+cd /
+echo "Gunziping deployment tar ${deployment_tar}.gz."
+gunzip ${deployment_tar}.gz
+echo "Extracting deployment tar."
+tar xvf ${deployment_tar}
+echo "Removing deployment tar."
+rm -f ${deployment_tar}
+#
+# Init script setup
+#
+# Init script already copied as /etc/init.d/autobooter
+# Ubuntu 20.04 uses runlevel 2: runlevels 2345 are all multi-user 
+echo "Setting up autobooter initialisation script."
+set dir_list = "/etc/rc0.d /etc/rc1.d /etc/rc6.d"
+foreach dir ( ${dir_list} )
+    cd ${dir}
+    if( ! -e K01autobooter ) then
+	ln -s ../init.d/autobooter K01autobooter
+    endif
+end
+set dir_list = " /etc/rc2.d /etc/rc3.d /etc/rc4.d /etc/rc5.d"
+foreach dir ( ${dir_list} )
+    cd ${dir}
+    if( ! -e S99autobooter ) then
+	ln -s ../init.d/autobooter S99autobooter
+    endif
+end
+echo "Setting up autobooter script."
+# Ubuntu 20.04
+chmod ugo+x /etc/init.d/autobooter
+chmod go-w /etc/init.d/autobooter
+chown root:root /etc/init.d/autobooter
+#
+# Reseting / and /etc ownership
+#
+echo "Reseting / ownership."
+chown root:root /
+chmod go-w /
+echo "Reseting /etc ownership."
+chown root:root /etc
+chmod go-w /etc
+echo "Reseting /etc/init.d ownership."
+chown root:root /etc/init.d/
+chmod go-w /etc/init.d/
+#
+# Set up /wms-qli50-wxt536 ownership
+#
+echo "Setting up /wms-qli50-wxt536 ownership."
+chown -R eng:ltdev /wms-qli50-wxt536
+#
+# Editing ~eng .cshrc
+#
+echo "Editing eng .cshrc"
+cat ~eng/.cshrc | awk -f ${current_dir}/wms_qli50_wxt536_cshrc_edit.awk > ~eng/.cshrc.tmp
+cat ~eng/.cshrc.tmp ${current_dir}/wms_qli50_wxt536_cshrc > ~eng/.cshrc
+rm -f ~eng/.cshrc.tmp
+#
+# Finished
+#
+echo "Installation completed, please 'reboot'."

@@ -1,0 +1,12 @@
+#!/bin/csh
+#
+# Kill any running processes
+#
+if ( -x /wms_qli50_wxt536/bin/scripts/killhup.csh ) then
+    echo "Trying to kill AutoBooter."
+    /wms_qli50_wxt536/bin/scripts/killhup.csh AutoBooter
+    echo "Trying to kill qli50-wxt536."
+    /wms_qli50_wxt536/bin/scripts/killhup.csh qli50-wxt536
+else
+    echo "killhup not found:FAILED to stop running processess."
+endif
