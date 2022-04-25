@@ -1,0 +1,31 @@
+DEPLOYMENT README
+Version: $Revision: 1.0 $
+By $Author: cjm $
+
+wms_qli50_wxt536 Installation
+-----------------------------
+This is the deployment for some software that sits between the Vaisala Wxt536 and the LT Wms. This receives Qli50 commands from the Wms, translates the commands to Wxt536, and translates the replies back to Qli50. This allows us to use the new Vaisala Wxt536 weather station with the Wms, which was written to communicate with a Qli50.
+
+Note, all logs are deleted during installation. Any configuration changes from the default will
+also be lost as all properties file in the binary tree are overwritten with the original version.
+To preserve changes, copy the properties files (*.properties) somewhere safe before installation.
+Better yet, update the originals on the ARI development account.
+
+===================================================================================
+= ENSURE the deployment is for the same machine architecture as the deployment OS =
+===================================================================================
+
+To install wms-qli50-wxt536:
+----------------------------
+
+1. Download from http://ltdevsrv.livjm.ac.uk/~dev/wms-qli50-wxt536/deployment/:
+	wms_qli50_wxt536_cshrc
+	wms_qli50_wxt536_cshrc_edit.awk
+	README.DEPLOYMENT
+	wms_qli50_wxt536_tar_install
+	wms_qli50_wxt536_deployment__<machine name>.tar.gz
+	Put the files in ~eng/Downloads/wms/<todays date>
+2. Login as root.
+3. ./wms_qli50_wxt536_tar_install <machine name>
+4. cd /
+5. reboot
