@@ -38,7 +38,7 @@ set install_script      = wms_qli50_wxt536_tar_install
 # machine dependant config
 set init_d_dir          = "/etc/init.d"
 setenv GREP "/bin/grep"
-set bin_file_type = "ELF 64-bit LSB shared object"
+set bin_file_type = "ELF 64-bit LSB"
 #
 # Clear old deployment.
 #
@@ -183,7 +183,7 @@ mkdir ${deployment_tmp_dir}
 cd ${deployment_bin_dir}
 # go through directory list
 foreach dir ( ${dir_list} )
-	echo "C test program directory : ${dir}"
+	echo "C program directory : ${dir}"
 # get file list
 	find ${dev_bin_dir}/${dir}/* > ${deployment_tmp_dir}/file_list.txt
 	foreach file ( `cat ${deployment_tmp_dir}/file_list.txt` )
@@ -219,7 +219,7 @@ if ( -r ${deployment_tmp_dir}/ident_list.txt) then
 endif
 cd ${deployment_dir}
 rm -rf ${deployment_tmp_dir}
-echo "${dir_count} C test program directories copied, containg ${file_count} C test programs."
+echo "${dir_count} C program directories copied, containg ${file_count} C programs."
 #
 # Scripts
 #
