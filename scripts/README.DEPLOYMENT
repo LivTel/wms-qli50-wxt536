@@ -25,7 +25,7 @@ To install wms-qli50-wxt536:
 	wms_qli50_wxt536_tar_install
 	wms_qli50_wxt536_deployment__<machine name>.tar.gz
 	Put the files in ~eng/Downloads/wms/<todays date>
-2. Login as root.
-3. ./wms_qli50_wxt536_tar_install <machine name>
+2. Login as eng.
+3. sudo ./wms_qli50_wxt536_tar_install <machine name>
 4. cd /
 5. reboot

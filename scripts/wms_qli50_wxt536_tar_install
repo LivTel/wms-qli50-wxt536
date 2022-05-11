@@ -1,4 +1,4 @@
-!/bin/csh
+#!/bin/csh
 # Install a deployment tar created by wms_qli50_wxt536_make_deployment
 # Usage:
 #	wms_qli50_wxt536_tar_install <machine>
