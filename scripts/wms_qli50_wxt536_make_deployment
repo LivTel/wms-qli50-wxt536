@@ -135,7 +135,7 @@ echo "${java_class_dir_count} Java class directories copied with ${java_class_fi
 # C libraries
 #
 echo "Copying C libraries..."
-set clib_list = "liblog_udp.so libwms-qli50-wxt536_serial.so libwms-qli50-wxt536_qli50.so libwms-qli50-wxt536_wxt536.so"
+set clib_list = "liblog_udp.so libestar_config.so libwms-qli50-wxt536_serial.so libwms-qli50-wxt536_qli50.so libwms-qli50-wxt536_wxt536.so"
 set clib_count = 0
 foreach clib ( ${clib_list} )
 	echo "C Library : ${clib}"
