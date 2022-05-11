@@ -13,15 +13,15 @@ if ( "${machine_name}" == "-help") then
 	exit 0
 endif
 set current_dir         = `pwd`
-set wms-qli50-wxt536    = wms_qli50_wxt536
+set wms_qli50_wxt536    = wms_qli50_wxt536
 set deployment_tar 	= "wms_qli50_wxt536_deployment_${machine_name}.tar"
 #
-# Ensure new installation files are not under /${wms-qli50-wxt536} (which gets deleted)
+# Ensure new installation files are not under /${wms_qli50_wxt536} (which gets deleted)
 #
-echo "${current_dir}" | /bin/grep -q '/${wms-qli50-wxt536}'
+echo "${current_dir}" | /bin/grep -q '/${wms_qli50_wxt536}'
 set grep_status = $status
 if( ${grep_status} == 0 ) then
-    echo "Installation files under /${wms-qli50-wxt536}. Move ALL file to ~eng/download/<date> and try again."
+    echo "Installation files under /${wms_qli50_wxt536}. Move ALL file to ~eng/download/<date> and try again."
     exit 1
 endif
 #
@@ -37,11 +37,11 @@ end
 #
 # Kill any running processes
 #
-if ( -x /${wms-qli50-wxt536}/bin/scripts/killhup.csh ) then
+if ( -x /${wms_qli50_wxt536}/bin/scripts/killhup.csh ) then
     echo "Trying to kill AutoBooter."
-    /${wms-qli50-wxt536}/bin/scripts/killhup.csh AutoBooter
+    /${wms_qli50_wxt536}/bin/scripts/killhup.csh AutoBooter
     echo "Trying to kill qli50-wxt536."
-    /${wms-qli50-wxt536}/bin/scripts/killhup.csh qli50-wxt536
+    /${wms_qli50_wxt536}/bin/scripts/killhup.csh qli50-wxt536
 else
     echo "killhup not found:FAILED to stop running processess."
 endif
@@ -49,15 +49,15 @@ endif
 # Delete old installation
 # DON'T delete the log directory.
 #
-if( -d /${wms-qli50-wxt536}/bin ) then
-    echo "Deleting /${wms-qli50-wxt536}/bin directory."
-    rm -rf /${wms-qli50-wxt536}/bin/*
+if( -d /${wms_qli50_wxt536}/bin ) then
+    echo "Deleting /${wms_qli50_wxt536}/bin directory."
+    rm -rf /${wms_qli50_wxt536}/bin/*
 endif
 #
 # Create new top level directory (if it does not already exist)
 #
-if( ! -d /${wms-qli50-wxt536} ) then
-    mkdir /${wms-qli50-wxt536}
+if( ! -d /${wms_qli50_wxt536} ) then
+    mkdir /${wms_qli50_wxt536}
 endif
 #
 # Extract new installation
@@ -109,10 +109,10 @@ echo "Reseting /etc/init.d ownership."
 chown root:root /etc/init.d/
 chmod go-w /etc/init.d/
 #
-# Set up /${wms-qli50-wxt536} ownership
+# Set up /${wms_qli50_wxt536} ownership
 #
-echo "Setting up /${wms-qli50-wxt536} ownership."
-chown -R eng:ltdev /${wms-qli50-wxt536}
+echo "Setting up /${wms_qli50_wxt536} ownership."
+chown -R eng:ltdev /${wms_qli50_wxt536}
 #
 # Editing ~eng .cshrc
 #
