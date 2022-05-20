@@ -51,7 +51,7 @@ endif
 #
 echo "Creating directory structure..."
 set dir_count = 0
-set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_wms_dir} ${deployment_bin_dir} ${deployment_wms_dir}/tmp ${deployment_wms_dir}/tmp/log_archive ${deployment_wms_dir}/log ${deployment_bin_dir}/scripts ${deployment_bin_dir}/wms-qli50-wxt536/c/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/qli50/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/wxt536/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/serial/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/scripts ${deployment_bin_dir}/wms-qli50-wxt536/config ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/test/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/autobooter/java "
+set dir_list = "${deployment_dir} ${deployment_dir}/${init_d_dir} ${deployment_wms_dir} ${deployment_bin_dir} ${deployment_wms_dir}/tmp ${deployment_wms_dir}/tmp/log_archive ${deployment_wms_dir}/log ${deployment_bin_dir}/scripts ${deployment_bin_dir}/wms-qli50-wxt536/c/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/qli50/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/wxt536/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/serial/test/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/scripts ${deployment_bin_dir}/wms-qli50-wxt536/config ${deployment_bin_dir}/ics_util/c/${HOSTTYPE} ${deployment_bin_dir}/javalib ${deployment_bin_dir}/lib/${HOSTTYPE} ${deployment_bin_dir}/wms-qli50-wxt536/test/${HOSTTYPE} ${deployment_bin_dir}/log_udp/test/${HOSTTYPE} ${deployment_bin_dir}/commandserver/test/${HOSTTYPE} ${deployment_bin_dir}/autobooter/java "
 foreach dir ( ${dir_list} )
 	mkdir -p ${dir}
 	if ($status != 0) then
@@ -135,7 +135,7 @@ echo "${java_class_dir_count} Java class directories copied with ${java_class_fi
 # C libraries
 #
 echo "Copying C libraries..."
-set clib_list = "liblog_udp.so libestar_config.so libwms-qli50-wxt536_serial.so libwms-qli50-wxt536_qli50.so libwms-qli50-wxt536_wxt536.so"
+set clib_list = "libcommandserver.so liblog_udp.so libestar_config.so libwms-qli50-wxt536_serial.so libwms-qli50-wxt536_qli50.so libwms-qli50-wxt536_wxt536.so"
 set clib_count = 0
 foreach clib ( ${clib_list} )
 	echo "C Library : ${clib}"
@@ -173,7 +173,7 @@ echo "${clib_count} C libraries copied."
 # C programs
 #
 echo "Copying C program directories..."
-set dir_list = "wms-qli50-wxt536/c/${HOSTTYPE} wms-qli50-wxt536/qli50/test/${HOSTTYPE} wms-qli50-wxt536/wxt536/test/${HOSTTYPE} wms-qli50-wxt536/serial/test/${HOSTTYPE} ics_util/c/${HOSTTYPE} log_udp/test/${HOSTTYPE}"
+set dir_list = "wms-qli50-wxt536/c/${HOSTTYPE} wms-qli50-wxt536/qli50/test/${HOSTTYPE} wms-qli50-wxt536/wxt536/test/${HOSTTYPE} wms-qli50-wxt536/serial/test/${HOSTTYPE} ics_util/c/${HOSTTYPE} log_udp/test/${HOSTTYPE} commandserver/test/${HOSTTYPE}"
 set dir_count = 0
 set file_count = 0
 # clean out deployment_tmp_dir
