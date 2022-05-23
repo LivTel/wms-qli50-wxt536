@@ -271,12 +271,17 @@ void Wms_Qli50_Set_Log_Filter_Function(int (*filter_fn)(char *class,char *source
  * @param source The source that produced this log message.
  * @param level The log level for this message.
  * @param string The log message to be logged. 
+ * @see #Wms_Qli50_Get_Current_Time_String
  */
 void Wms_Qli50_Log_Handler_Stdout(char *class,char *source,int level,char *string)
 {
+	char timestring[32];
+
+	/* put timestamp in buff */
+	Wms_Qli50_Get_Current_Time_String(timestring,31);
 	if(string == NULL)
 		return;
-	fprintf(stdout,"%s : %s : %s\n",class,source,string);
+	fprintf(stdout,"%s : %s : %s : %s\n",timestring,class,source,string);
 }
 
 /**

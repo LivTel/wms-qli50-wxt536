@@ -23,7 +23,7 @@ foreach dir ( ${LT_BIN_HOME}/lib/${HOSTTYPE} )
 end
 
 # Useful command aliass
-alias wms_qli50_wxt536_engineering_mode   	'/wms_qli50_wxt536/bin/scripts/wms_qli50_wxt536_engineering_mode'
+alias wms_qli50_wxt536_engineering_mode   	'/wms_qli50_wxt536/bin/wms-qli50-wxt536/scripts/wms_qli50_wxt536_engineering_mode'
 alias myps             			        'ps -e -o pid,pcpu,vsz,ruser,args'
 alias send_command                              '/wms_qli50_wxt536/bin/commandserver/test/x86_64-linux/send_command'
 # Do not delete the next comment, it delimits the cshrc updated by the wms_qli50_wxt536_install script.
