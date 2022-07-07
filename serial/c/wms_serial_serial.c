@@ -199,6 +199,25 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 	/* wait for up to 10 deciseconds before timing out input */
 	handle->Serial_Options.c_cc[VMIN]=0;
 	handle->Serial_Options.c_cc[VTIME]=10;
+	/* set input and output speeds again */
+	retval = cfsetispeed(&(handle->Serial_Options),Serial_Attribute_Data.Baud_Rate);
+	if(retval != 0)
+	{
+		open_errno = errno;
+		Wms_Serial_Error_Number = 20;
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: cfsetispeed failed (%d = %s).",open_errno,
+			strerror(open_errno));
+		return FALSE;
+	}
+	retval = cfsetospeed(&(handle->Serial_Options),Serial_Attribute_Data.Baud_Rate);
+	if(retval != 0)
+	{
+		open_errno = errno;
+		Wms_Serial_Error_Number = 21;
+		sprintf(Wms_Serial_Error_String,"Wms_Serial_Open: cfsetospeed failed (%d = %s).",open_errno,
+			strerror(open_errno));
+		return FALSE;
+	}
 #if LOGGING > 2
 	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
 	      "Wms_Serial_Open:New Attr:Input:%#x,Output:%#x,Local:%#x,Control:%#x,Min:%c,Time:%c.",
@@ -239,6 +258,16 @@ int Wms_Serial_Open(char *class,char *source,Wms_Serial_Handle_T *handle)
 		       handle->Serial_Options.c_iflag,handle->Serial_Options.c_oflag,
 		       handle->Serial_Options.c_lflag,handle->Serial_Options.c_cflag,
 		       handle->Serial_Options.c_cc[VMIN],handle->Serial_Options.c_cc[VTIME]);
+	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
+			      "Wms_Serial_Serial_Open:Input Baud Rate:%d,B1200 = %d.",cfgetispeed(&(handle->Serial_Options)),B1200);
+	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
+			      "Wms_Serial_Serial_Open:Output Baud Rate:%d.",cfgetospeed(&(handle->Serial_Options)));
+	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
+			      "Wms_Serial_Serial_Open:Character bits %d, CS7 = %d.",
+			      handle->Serial_Options.c_cflag&CSIZE,CS7);
+	Wms_Serial_Log_Format(class,source,LOG_VERBOSITY_VERY_VERBOSE,
+			      "Wms_Serial_Serial_Open:Parity %d,Odd Parity = %d.",
+			      handle->Serial_Options.c_cflag&PARENB,handle->Serial_Options.c_cflag&PARODD);
 #endif /* LOGGING */
 #if LOGGING > 0
 	Wms_Serial_Log(class,source,LOG_VERBOSITY_INTERMEDIATE,"Wms_Serial_Serial_Open:Finished.");
