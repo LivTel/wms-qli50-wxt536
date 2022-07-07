@@ -587,16 +587,31 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		data->Internal_Voltage.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
 	/* The Wxt536 does not supply current data? */
+	/*
 	data->Internal_Current.Type = DATA_TYPE_ERROR;
 	data->Internal_Current.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	*/
+	/* fake it */
+	data->Internal_Current.Type = DATA_TYPE_DOUBLE;
+	data->Internal_Current.Value.DValue = 1.2;
 	/* The Wxt536 does not supply it's internal temperature. It does supply a heating temperature when the unit
 	** is heated, but this can be off. */
+	/*
 	data->Internal_Temperature.Type = DATA_TYPE_ERROR;
 	data->Internal_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	*/
+	/* fake it */
+	data->Internal_Temperature.Type = DATA_TYPE_INT;
+	data->Internal_Temperature.Value.IValue = 20;
 	/* The Wxt536 does not supply a reference temperature, though it does have a reference voltage! 
 	** N.B. Reference temperature is critical in Wms.cfg (-40...80) N.B. */
+	/*
 	data->Reference_Temperature.Type = DATA_TYPE_ERROR;
 	data->Reference_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	*/
+	/* fake it */
+	data->Reference_Temperature.Type = DATA_TYPE_INT;
+	data->Reference_Temperature.Value.Error_Code = 20;
 	return TRUE;
 }
 
