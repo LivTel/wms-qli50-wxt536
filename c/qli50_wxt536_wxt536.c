@@ -436,6 +436,10 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
 		sprintf(Qli50_Wxt536_Error_String,"Qli50_Wxt536_Wxt536_Read_Sensors:Reading Analogue data failed.");
 		retval = FALSE;
 	}
+#if LOGGING > 1
+	Qli50_Wxt536_Log("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
+				"Qli50_Wxt536_Wxt536_Read_Sensors finished.");
+#endif /* LOGGING */
 	return retval;
 }
 
@@ -612,6 +616,10 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 	/* fake it */
 	data->Reference_Temperature.Type = DATA_TYPE_INT;
 	data->Reference_Temperature.Value.Error_Code = 20;
+#if LOGGING > 1
+	Qli50_Wxt536_Log("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
+				"Qli50_Wxt536_Wxt536_Send_Results finished.");
+#endif /* LOGGING */
 	return TRUE;
 }
 
