@@ -245,7 +245,15 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 	char protocol;
 	
 	Qli50_Wxt536_Error_Number = 0;
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
+				"Qli50_Wxt536_Wxt536_Initialise:Started.");
+#endif /* LOGGING */
 	/* get the serial device filename from config */
+#if LOGGING > 5
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+				"Qli50_Wxt536_Wxt536_Initialise:Opening connection to Wxt536.");
+#endif /* LOGGING */
 	if(!Qli50_Wxt536_Config_String_Get("wxt536.serial_device.name",Serial_Device_Filename,FILENAME_LENGTH))
 		return FALSE;
 	if(!Wms_Wxt536_Connection_Open("Wxt536","qli50_wxt536_wxt536.c",Serial_Device_Filename))
@@ -257,6 +265,10 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 		return FALSE;
 	}
 	/* get the device address of the connected Wxt536, and store for later use. */
+#if LOGGING > 5
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+				"Qli50_Wxt536_Wxt536_Initialise:Get Wxt536 device address.");
+#endif /* LOGGING */
 	if(!Wms_Wxt536_Command_Device_Address_Get("Wxt536","qli50_wxt536_wxt536.c",&Wxt536_Device_Address))
 	{
 		Qli50_Wxt536_Error_Number = 201;
@@ -265,6 +277,10 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 		return FALSE;
 	}
 	/* ensure the protocol is setup correctly. */
+#if LOGGING > 5
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+				"Qli50_Wxt536_Wxt536_Initialise:Set the Wxt536 device protocol.");
+#endif /* LOGGING */
 	if(!Qli50_Wxt536_Config_String_Get("wxt536.protocol",protocol_string,31))
 		return FALSE;
 	if(strlen(protocol_string) > 1)
@@ -288,6 +304,10 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.max_datum_age",&Max_Datum_Age))
 		return FALSE;
 	/* get the Wxt536 analogue input settings */
+#if LOGGING > 5
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+				"Qli50_Wxt536_Wxt536_Initialise:Set the Wxt536 analogue inpuit settings.");
+#endif /* LOGGING */
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.analogue_input.update_interval",&Wxt536_Analogue_Input_Update_Interval))
 		return FALSE;
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.analogue_input.averaging_time",&Wxt536_Analogue_Input_Averaging_Time))
@@ -305,6 +325,10 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 		return FALSE;
 	}
 	/* get the Wxt536 pyranometer gain */
+#if LOGGING > 5
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+				"Qli50_Wxt536_Wxt536_Initialise:Set the Wxt536 pyranometer gain.");
+#endif /* LOGGING */
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.pyranometer.gain",&Wxt536_Pyranometer_Gain))
 		return FALSE;
 	/* set the wxt536 to use the configured gain */
@@ -317,6 +341,10 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 			Wxt536_Pyranometer_Gain,Wxt536_Device_Address);		
 		return FALSE;
 	}
+#if LOGGING > 5
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERBOSE,
+				"Qli50_Wxt536_Wxt536_Initialise:Get the Wxt536 internal configuration.");
+#endif /* LOGGING */
 	/* get the CMP3 pyranometer sensitivity in uV/W/m^2*/
 	if(!Qli50_Wxt536_Config_Double_Get("cmp3.pyranometer.sensitivity",&CMP3_Pyranometer_Sensitivity))
 		return FALSE;
@@ -338,7 +366,10 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 	/* get the analogue surface wet wxt536 scaling factor */
 	if(!Qli50_Wxt536_Config_Double_Get("analogue.surface.wet.wxt536.scale",&Analogue_Surface_Wet_Wxt536_Scale))
 		return FALSE;
-	
+#if LOGGING > 1
+	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
+				"Qli50_Wxt536_Wxt536_Initialise:Finished.");
+#endif /* LOGGING */	
 	return TRUE;
 }
 
