@@ -193,7 +193,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  *     This is stored in Serial_Device_Filename.
  * <li>We open connection to the Wxt536 by calling Wms_Wxt536_Connection_Open with the previously discovered
  *     serial device filename.
- * <li>We call Wms_Wxt536_Command_Device_Address_Get to get the Wxt536 device address for this device, and store it in #
+ * <li>We call Wms_Wxt536_Command_Device_Address_Get to get the Wxt536 device address for this device, and store it in 
  *     Wxt536_Device_Address.
  * <li>We retrieve the Wxt536 protocol to use from the config file (keyword "wxt536.protocol").
  * <li>We call Wms_Wxt536_Command_Comms_Settings_Protocol_Set to set the protocol to use with the Wxt536.
