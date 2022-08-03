@@ -115,6 +115,20 @@ static struct Wxt536_Data_Struct Wxt536_Data;
  */
 static double Max_Datum_Age;
 /**
+ * Configure how often the Wxt536 updates it's analogue input values, in decimal seconds. 
+ * It defaults to updating these every minute,
+ * as we have the DRD11A attached to one of these inputs we want to react to wetness quicker than that.
+ * The update interval must be longer than the averaging time.
+ */
+static double Wxt536_Analogue_Input_Update_Interval;
+/**
+ * Configure the length of time the Wxt536 averages the solar radiation and ultrasonic level 
+ * (used by us for the DRD11A analogue input) data values, in decimal seconds. 
+ * The default of 3s is reasonable for our usage, but if we want to decrease the update interval we may want to decrease 
+ * this value as well, as the averaging time must be less than the update interval.
+ */
+static double Wxt536_Analogue_Input_Averaging_Time;
+/**
  * The gain applied to the pyranometer voltage returned by the Wxt536. The factory default is 100000,
  * and the currently set gain can be read by the "0IB,G" command.
  */
@@ -126,10 +140,12 @@ static double Wxt536_Pyranometer_Gain = 100000.0;
 static double CMP3_Pyranometer_Sensitivity = 30.95;
 /**
  * Which sensor to use for measuring digital surface wet.
+ * @see #Sensor_Type_Enum
  */
 static enum Sensor_Type_Enum Digital_Surface_Wet_Sensor;
 /**
  * Which sensor to use for measuring digital surface wet.
+ * @see #Sensor_Type_Enum
  */
 static enum Sensor_Type_Enum Analogue_Surface_Wet_Sensor;
 /**
@@ -182,6 +198,9 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * <li>We retrieve the Wxt536 protocol to use from the config file (keyword "wxt536.protocol").
  * <li>We call Wms_Wxt536_Command_Comms_Settings_Protocol_Set to set the protocol to use with the Wxt536.
  * <li>We retrieve the Max_Datum_Age from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the Wxt536_Analogue_Input_Update_Interval from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We retrieve the Wxt536_Analogue_Input_Averaging_Time from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We configure the Wxt536 to use the analogue input settings by calling Wms_Wxt536_Command_Analogue_Input_Settings_Set.
  * <li>We retrieve the Wxt536_Pyranometer_Gain from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We configure the Wxt536 to use the pyranometer gain by calling Wms_Wxt536_Command_Solar_Radiation_Gain_Set.
  * <li>We retrieve the CMP3_Pyranometer_Sensitivity from the config file using Qli50_Wxt536_Config_Double_Get.
@@ -198,6 +217,8 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * @see #Serial_Device_Filename
  * @see #Wxt536_Device_Address
  * @see #Max_Datum_Age
+ * @see #Wxt536_Analogue_Input_Update_Interval
+ * @see #Wxt536_Analogue_Input_Averaging_Time
  * @see #Wxt536_Pyranometer_Gain
  * @see #CMP3_Pyranometer_Sensitivity
  * @see #Sensor_Type_Enum
@@ -216,6 +237,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Device_Address_Get
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Comms_Settings_Protocol_Set
  * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Solar_Radiation_Gain_Set
+ * @see ../wxt536/cdocs/wms_wxt536_command.html#Wms_Wxt536_Command_Analogue_Input_Settings_Set
  */
 int Qli50_Wxt536_Wxt536_Initialise(void)
 {
@@ -265,6 +287,23 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 	/* get the maximum datum age in seconds */
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.max_datum_age",&Max_Datum_Age))
 		return FALSE;
+	/* get the Wxt536 analogue input settings */
+	if(!Qli50_Wxt536_Config_Double_Get("wxt536.analogue_input.update_interval",&Wxt536_Analogue_Input_Update_Interval))
+		return FALSE;
+	if(!Qli50_Wxt536_Config_Double_Get("wxt536.analogue_input.averaging_time",&Wxt536_Analogue_Input_Averaging_Time))
+		return FALSE;
+	/* set the wxt536 to use the configured analogue input settings */
+	if(!Wms_Wxt536_Command_Analogue_Input_Settings_Set("Wxt536","qli50_wxt536_wxt536.c",Wxt536_Device_Address,
+							   Wxt536_Analogue_Input_Update_Interval,
+							   Wxt536_Analogue_Input_Averaging_Time))
+	{
+		Qli50_Wxt536_Error_Number = 214;
+		sprintf(Qli50_Wxt536_Error_String,"Qli50_Wxt536_Wxt536_Initialise: "
+			"Failed to set the anagloue input settings to update interval %.3f s, "
+			"averaging time %.3f s for Wxt536 device address '%c'.",
+			Wxt536_Analogue_Input_Update_Interval,Wxt536_Analogue_Input_Averaging_Time,Wxt536_Device_Address);
+		return FALSE;
+	}
 	/* get the Wxt536 pyranometer gain */
 	if(!Qli50_Wxt536_Config_Double_Get("wxt536.pyranometer.gain",&Wxt536_Pyranometer_Gain))
 		return FALSE;
