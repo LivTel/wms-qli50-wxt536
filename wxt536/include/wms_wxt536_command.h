@@ -198,6 +198,10 @@ extern int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *sour
 extern int Wms_Wxt536_Command_Reset(char *class,char *source,char device_address);
 extern int Wms_Wxt536_Command_Reset_Precipitation_Counter(char *class,char *source,char device_address);
 extern int Wms_Wxt536_Command_Reset_Precipitation_Intensity(char *class,char *source,char device_address);
+extern int Wms_Wxt536_Command_Analogue_Input_Settings_Get(char *class,char *source,char device_address,
+							  double *update_interval, double *averaging_time);
+extern int Wms_Wxt536_Command_Analogue_Input_Settings_Set(char *class,char *source,char device_address,
+							  double update_interval, double averaging_time);
 extern int Wms_Wxt536_Command_Solar_Radiation_Gain_Get(char *class,char *source,char device_address,double *gain);
 extern int Wms_Wxt536_Command_Solar_Radiation_Gain_Set(char *class,char *source,char device_address,double gain);
 extern int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,char device_address,

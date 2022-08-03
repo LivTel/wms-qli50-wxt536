@@ -317,6 +317,9 @@ int Wms_Wxt536_Command_Comms_Settings_Get(char *class,char *source,char device_a
 	if(!Wxt536_Parse_Parameter(class,source,"H","%d",parameter_value_list,parameter_value_count,
 				   &(comms_settings->Parameter_Locking)))
 		return FALSE;
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);
        	return TRUE;
 }
 
@@ -390,7 +393,10 @@ int Wms_Wxt536_Command_Comms_Settings_Protocol_Set(char *class,char *source,char
 			"Wrong reply parameter value ('%c' vd '%c').",parameter_value_list[0].Value_String[0],protocol);
 		return FALSE;		
 	}
-	return TRUE;
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);
+ 	return TRUE;
 }
 
 /**
@@ -484,6 +490,137 @@ int Wms_Wxt536_Command_Reset_Precipitation_Intensity(char *class,char *source,ch
 
 /**
  * Routine to query the Wxt536 with the specified device_address a command to retrieve the 
+ * analogue input settings and parse the update_interval and averaging time from it's reply.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536 
+ *        (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param update_interval The address of a double to fill in with the parsed update interval (in seconds) used by the Wxt536.
+ *        i.e. The Wxt536 changes the returned analogue input values on this cadence.
+ * @param averaging_time The address of a double to fill in with the parsed averaging time (in seconds) used by the Wxt536.
+ *        i.e. The Wxt536 averages the solar radiation and ultrasonic level inputs (which we use for the DRD11A analogue input)
+ *        over this time period, in seconds. The averaging_time should be less than the update_interval.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Analogue_Input_Settings_Get(char *class,char *source,char device_address,
+							  double *update_interval, double *averaging_time)
+{
+	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
+	char command_string[256];
+	char reply_string[256];
+	int parameter_value_count;
+
+	Wms_Wxt536_Error_Number = 0;
+	if(update_interval == NULL)
+	{
+		Wms_Wxt536_Error_Number = 130;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Analogue_Input_Settings_Get:update_interval was NULL.");
+		return FALSE;		
+	}
+	if(averaging_time == NULL)
+	{
+		Wms_Wxt536_Error_Number = 131;
+		sprintf(Wms_Wxt536_Error_String,"Wms_Wxt536_Command_Analogue_Input_Settings_Get:averaging_time was NULL.");
+		return FALSE;		
+	}
+	sprintf(command_string,"%cIU",device_address);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	/* parse the reply string into keyword/value pairs */
+	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
+		return FALSE;
+	/* Extract the relevant parameters from the parameter_value_list, parse them and store them in the
+	** return data structure */
+	if(!Wxt536_Parse_Parameter(class,source,"I","%lf",parameter_value_list,parameter_value_count,update_interval))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"A","%lf",parameter_value_list,parameter_value_count,averaging_time))
+		return FALSE;
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
+	return TRUE;
+}
+
+/**
+ * Routine to set some analogue input settings for the Wxt536 with the specified device_address.
+ * @param class The class parameter for logging.
+ * @param source The source parameter for logging.
+ * @param device_address The device address of the Wxt536 
+ *        (can be retrieved using Wms_Wxt536_Command_Device_Address_Get).
+ * @param update_interval A double, the update interval (in seconds) used by the Wxt536 to update the analogue inputs.
+ *        i.e. The Wxt536 changes the returned analogue input values on this cadence. The update_interval must be greater than
+ *        the averaging_time.
+ * @param averaging_time A double, the averaging time (in seconds) used by the Wxt536.
+ *        The Wxt536 averages the solar radiation and ultrasonic level inputs (which we use for the DRD11A analogue input)
+ *        over this time period, in seconds. The averaging_time must be less than the update_interval.
+ * @return The procedure returns TRUE if successful, and FALSE if it failed 
+ *         (Wms_Wxt536_Error_Number and Wms_Wxt536_Error_String are filled in on failure).
+ * @see #Wms_Wxt536_Command
+ * @see #Wxt536_Parameter_Value_Struct
+ * @see #Wxt536_Parse_CSV_Reply
+ * @see #Wxt536_Parse_Parameter
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log
+ * @see wms_wxt536_general.html#Wms_Wxt536_Log_Format
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_Number
+ * @see wms_wxt536_general.html#Wms_Wxt536_Error_String
+ */
+int Wms_Wxt536_Command_Analogue_Input_Settings_Set(char *class,char *source,char device_address,
+						   double update_interval, double averaging_time)
+{
+	struct Wxt536_Parameter_Value_Struct *parameter_value_list = NULL;
+	char command_string[256];
+	char reply_string[256];
+	int parameter_value_count;
+	double returned_update_interval,returned_averaging_time;
+	
+	Wms_Wxt536_Error_Number = 0;
+	sprintf(command_string,"%cIU,I=%.3f,A=%.3f",device_address,update_interval,averaging_time);
+	/* send the command and get the reply string */
+	if(!Wms_Wxt536_Command(class,source,command_string,reply_string,255))
+		return FALSE;
+	/* parse the reply string into keyword/value pairs */
+	if(!Wxt536_Parse_CSV_Reply(class,source,reply_string,&parameter_value_list,&parameter_value_count))
+		return FALSE;
+	/* Extract the relevant parameters from the parameter_value_list, and check they have been set correctly */
+	if(!Wxt536_Parse_Parameter(class,source,"I","%lf",parameter_value_list,parameter_value_count,&returned_update_interval))
+		return FALSE;
+	if(!Wxt536_Parse_Parameter(class,source,"A","%lf",parameter_value_list,parameter_value_count,&returned_averaging_time))
+		return FALSE;
+	/* check the values have been set correctly */
+	if(fabs(update_interval-returned_update_interval) > 0.1)
+	{
+		Wms_Wxt536_Error_Number = 132;
+		sprintf(Wms_Wxt536_Error_String,
+			"Wms_Wxt536_Command_Analogue_Input_Settings_Set:update_interval was not set (%.3f vs %.3f).",
+			update_interval,returned_update_interval);
+		return FALSE;		
+	}
+	if(fabs(averaging_time-returned_averaging_time) > 0.1)
+	{
+		Wms_Wxt536_Error_Number = 133;
+		sprintf(Wms_Wxt536_Error_String,
+			"Wms_Wxt536_Command_Analogue_Input_Settings_Set:averaging_time was not set (%.3f vs %.3f).",
+			averaging_time,returned_averaging_time);
+		return FALSE;		
+	}
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
+	return TRUE;
+}
+
+/**
+ * Routine to query the Wxt536 with the specified device_address a command to retrieve the 
  * solar radiation sensor settings and parse the gain from it's reply.
  * @param class The class parameter for logging.
  * @param source The source parameter for logging.
@@ -526,6 +663,9 @@ int Wms_Wxt536_Command_Solar_Radiation_Gain_Get(char *class,char *source,char de
 	** return data structure */
 	if(!Wxt536_Parse_Parameter(class,source,"G","%lf",parameter_value_list,parameter_value_count,gain))
 		return FALSE;
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
 	return TRUE;
 }
 
@@ -576,6 +716,9 @@ int Wms_Wxt536_Command_Solar_Radiation_Gain_Set(char *class,char *source,char de
 			gain,returned_gain);
 		return FALSE;		
 	}
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
 	return TRUE;
 }
 
@@ -640,6 +783,9 @@ int Wms_Wxt536_Command_Wind_Data_Get(char *class,char *source,char device_addres
 	if(!Wxt536_Parse_Parameter(class,source,"Sx","%lfM",parameter_value_list,parameter_value_count,
 				   &(data->Wind_Speed_Maximum)))
 		return FALSE;
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
 	return TRUE;
 }
 
@@ -696,6 +842,9 @@ int Wms_Wxt536_Command_Pressure_Temperature_Humidity_Data_Get(char *class,char *
 	if(!Wxt536_Parse_Parameter(class,source,"Pa","%lfH",parameter_value_list,parameter_value_count,
 				   &(data->Air_Pressure)))
 		return FALSE;
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
 	return TRUE;	
 }
 
@@ -768,6 +917,9 @@ int Wms_Wxt536_Command_Precipitation_Data_Get(char *class,char *source,char devi
 				   &(data->Hail_Peak_Intensity)))
 		return FALSE;
 	*/
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
 	return TRUE;	
 }
 
@@ -834,6 +986,9 @@ int Wms_Wxt536_Command_Supervisor_Data_Get(char *class,char *source,char device_
 				   &(data->Information)))
 		return FALSE;
 	*/
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
 	return TRUE;	
 }
 
@@ -893,6 +1048,9 @@ int Wms_Wxt536_Command_Analogue_Data_Get(char *class,char *source,char device_ad
 	if(!Wxt536_Parse_Parameter(class,source,"Sr","%lfV",parameter_value_list,parameter_value_count,
 				   &(data->Solar_Radiation_Voltage)))
 		return FALSE;
+	/* free parameter_value_list */
+	if(parameter_value_list != NULL)
+		free(parameter_value_list);	
 	return TRUE;	
 }
 
