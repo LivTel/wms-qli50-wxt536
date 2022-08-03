@@ -897,7 +897,7 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
 			Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_VERY_VERBOSE,
 						"Wxt536_Analogue_Surface_Wet_Set:"
 						"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet), "
-						"using wet point %.3f v and scale %.2, giving value %d %%.",
+						"using wet point %.3f v and scale %.2f, giving value %d %%.",
 						Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage,
 						Analogue_Surface_Wet_Drd11a_Wet_Point,Analogue_Surface_Wet_Drd11a_Scale,
 						analogue_surface_wet_value->Value.IValue);
