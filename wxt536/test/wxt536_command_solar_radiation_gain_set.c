@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
 	fprintf(stdout,"Setting Solar Radiation Sensor Gain to %.3f in Wxt536 with Device Address '%c'.\n",Gain,
 		Device_Address);
 	if(!Wms_Wxt536_Command_Solar_Radiation_Gain_Set("Wxt536 Solar Radiation Sensor Gain Set",
-							"wxt536_command_solar_radiation_gain_get.c",
+							"wxt536_command_solar_radiation_gain_set.c",
 							Device_Address,Gain))
 	{
 		Wms_Wxt536_Error();
