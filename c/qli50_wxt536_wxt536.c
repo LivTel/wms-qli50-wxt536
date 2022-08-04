@@ -120,14 +120,14 @@ static double Max_Datum_Age;
  * as we have the DRD11A attached to one of these inputs we want to react to wetness quicker than that.
  * The update interval must be longer than the averaging time.
  */
-static double Wxt536_Analogue_Input_Update_Interval;
+static double Wxt536_Analogue_Input_Update_Interval = 6.0;
 /**
  * Configure the length of time the Wxt536 averages the solar radiation and ultrasonic level 
  * (used by us for the DRD11A analogue input) data values, in decimal seconds. 
  * The default of 3s is reasonable for our usage, but if we want to decrease the update interval we may want to decrease 
  * this value as well, as the averaging time must be less than the update interval.
  */
-static double Wxt536_Analogue_Input_Averaging_Time;
+static double Wxt536_Analogue_Input_Averaging_Time = 3.0;
 /**
  * The gain applied to the pyranometer voltage returned by the Wxt536. The factory default is 100000,
  * and the currently set gain can be read by the "0IB,G" command.
@@ -173,6 +173,18 @@ static double Analogue_Surface_Wet_Drd11a_Scale = 50.0;
  * A scale value of 100.0 means a rain intensity of 1mm/h converts to an analaogue wetness of 100%
  */
 static double Analogue_Surface_Wet_Wxt536_Scale = 100.0;
+/**
+ * An integer (as a boolean). Should we fake the qli50 internal current data, or return QLI50_ERROR_NO_MEASUREMENT?
+ */
+static int Qli50_Internal_Current_Fake = FALSE;
+/**
+ * An integer (as a boolean). Should we fake the qli50 internal temperature data, or return QLI50_ERROR_NO_MEASUREMENT?
+ */
+static int Qli50_Internal_Temperature_Fake = FALSE;
+/**
+ * An integer (as a boolean). Should we fake the qli50 reference temperature data, or return QLI50_ERROR_NO_MEASUREMENT?
+ */
+static int Qli50_Reference_Temperature_Fake = FALSE;
 
 /* internal functions */
 static int Wxt536_Config_Sensor_Get(char *keyword,enum Sensor_Type_Enum *sensor);
@@ -210,6 +222,12 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * <li>We retrieve the Analogue_Surface_Wet_Drd11a_Wet_Point from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We retrieve the Analogue_Surface_Wet_Drd11a_Scale from the config file using Qli50_Wxt536_Config_Double_Get.
  * <li>We retrieve the Analogue_Surface_Wet_Wxt536_Scale from the config file using Qli50_Wxt536_Config_Double_Get.
+ * <li>We check whether to fake the Qli50 internal current or return no measurement, 
+ *     by retrieving 'qli50.internal_current.fake' from the config file and assigning it to Qli50_Internal_Current_Fake.
+ * <li>We check whether to fake the Qli50 internal temperature or return no measurement, 
+ *     by retrieving 'qli50.internal_temperature.fake' from the config file and assigning it to Qli50_Internal_Temperature_Fake.
+ * <li>We check whether to fake the Qli50 reference temperature or return no measurement, 
+ *     by retrieving 'qli50.reference_temperature.fake' from the config file and assigning it to Qli50_Reference_Temperature_Fake.
  * </ul>
  * @return The routine returns TRUE on success and FALSE on failure. If it fails, Qli50_Wxt536_Error_Number and
  *         Qli50_Wxt536_Error_String will be set with a suitable error.
@@ -228,6 +246,9 @@ static void Wxt536_Analogue_Surface_Wet_Set(struct timespec current_time,
  * @see #Analogue_Surface_Wet_Drd11a_Wet_Point
  * @see #Analogue_Surface_Wet_Drd11a_Scale
  * @see #Analogue_Surface_Wet_Wxt536_Scale
+ * @see #Qli50_Internal_Current_Fake
+ * @see #Qli50_Internal_Temperature_Fake
+ * @see #Qli50_Reference_Temperature_Fake
  * @see #Wxt536_Config_Sensor_Get
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
@@ -365,6 +386,15 @@ int Qli50_Wxt536_Wxt536_Initialise(void)
 		return FALSE;
 	/* get the analogue surface wet wxt536 scaling factor */
 	if(!Qli50_Wxt536_Config_Double_Get("analogue.surface.wet.wxt536.scale",&Analogue_Surface_Wet_Wxt536_Scale))
+		return FALSE;
+	/* Should we fake the qli50 internal current data, or return QLI50_ERROR_NO_MEASUREMENT? */
+	if(!Qli50_Wxt536_Config_Boolean_Get("qli50.internal_current.fake",&Qli50_Internal_Current_Fake))
+		return FALSE;
+	 /* Should we fake the qli50 internal temperature data, or return QLI50_ERROR_NO_MEASUREMENT? */
+	if(!Qli50_Wxt536_Config_Boolean_Get("qli50.internal_temperature.fake",&Qli50_Internal_Temperature_Fake))
+		return FALSE;
+	 /* Should we fake the qli50 reference temperature data, or return QLI50_ERROR_NO_MEASUREMENT? */
+	if(!Qli50_Wxt536_Config_Boolean_Get("qli50.reference_temperature.fake",&Qli50_Reference_Temperature_Fake))
 		return FALSE;
 #if LOGGING > 1
 	Qli50_Wxt536_Log_Format("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
@@ -530,6 +560,9 @@ int Qli50_Wxt536_Wxt536_Read_Sensors(char qli_id,char seq_id)
  * @see #Wxt536_Calculate_Dew_Point
  * @see #Wxt536_Pyranometer_Volts_to_Watts_M2
  * @see #Wxt536_Digital_Surface_Wet_Set
+ * @see #Qli50_Internal_Current_Fake
+ * @see #Qli50_Internal_Temperature_Fake
+ * @see #Qli50_Reference_Temperature_Fake
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_Number
  * @see qli50_wxt536_general.html#Qli50_Wxt536_Error_String
  * @see ../qli50/cdocs/wms_qli50_command.html#QLI50_ERROR_NO_MEASUREMENT
@@ -612,7 +645,6 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		data->Wind_Direction.Type = DATA_TYPE_ERROR;
 		data->Wind_Direction.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
-	/* diddly todo */
 	/* QLI50 digital surface wetness, valid range 2..5. Output is an open collector, active low signal responds to rain. 
 	** Rain is held on for 2 minutes. 
 	** Basically, should be 0v when wet, and 5v when dry. */
@@ -660,32 +692,46 @@ int Qli50_Wxt536_Wxt536_Send_Results(char qli_id,char seq_id,struct Wms_Qli50_Da
 		data->Internal_Voltage.Type = DATA_TYPE_ERROR;
 		data->Internal_Voltage.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	}
-	/* The Wxt536 does not supply current data? */
+	/* The Wxt536 does not supply current data */
+	if(Qli50_Internal_Current_Fake)
+	{
+		/* fake it */
+		data->Internal_Current.Type = DATA_TYPE_DOUBLE;
+		data->Internal_Current.Value.DValue = 1.2;
+	}
+	else
+	{
+		data->Internal_Current.Type = DATA_TYPE_ERROR;
+		data->Internal_Current.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
 	/*
-	data->Internal_Current.Type = DATA_TYPE_ERROR;
-	data->Internal_Current.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
 	*/
-	/* fake it */
-	data->Internal_Current.Type = DATA_TYPE_DOUBLE;
-	data->Internal_Current.Value.DValue = 1.2;
 	/* The Wxt536 does not supply it's internal temperature. It does supply a heating temperature when the unit
 	** is heated, but this can be off. */
-	/*
-	data->Internal_Temperature.Type = DATA_TYPE_ERROR;
-	data->Internal_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
-	*/
-	/* fake it */
-	data->Internal_Temperature.Type = DATA_TYPE_INT;
-	data->Internal_Temperature.Value.IValue = 20;
+	if(Qli50_Internal_Temperature_Fake)
+	{
+		/* fake it */
+		data->Internal_Temperature.Type = DATA_TYPE_INT;
+		data->Internal_Temperature.Value.IValue = 20;
+	}
+	else
+	{
+		data->Internal_Temperature.Type = DATA_TYPE_ERROR;
+		data->Internal_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
 	/* The Wxt536 does not supply a reference temperature, though it does have a reference voltage! 
 	** N.B. Reference temperature is critical in Wms.cfg (-40...80) N.B. */
-	/*
-	data->Reference_Temperature.Type = DATA_TYPE_ERROR;
-	data->Reference_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
-	*/
-	/* fake it */
-	data->Reference_Temperature.Type = DATA_TYPE_INT;
-	data->Reference_Temperature.Value.Error_Code = 20;
+	if(Qli50_Reference_Temperature_Fake)
+	{
+		/* fake it */
+		data->Reference_Temperature.Type = DATA_TYPE_INT;
+		data->Reference_Temperature.Value.Error_Code = 20;
+	}
+	else
+	{
+		data->Reference_Temperature.Type = DATA_TYPE_ERROR;
+		data->Reference_Temperature.Value.Error_Code = QLI50_ERROR_NO_MEASUREMENT;
+	}
 #if LOGGING > 1
 	Qli50_Wxt536_Log("Wxt536","qli50_wxt536_wxt536.c",LOG_VERBOSITY_INTERMEDIATE,
 				"Qli50_Wxt536_Wxt536_Send_Results finished.");
