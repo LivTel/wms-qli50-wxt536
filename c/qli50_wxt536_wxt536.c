@@ -904,8 +904,10 @@ static void Wxt536_Digital_Surface_Wet_Set(struct timespec current_time,
 						"Using DRD11A rain sensor with voltage %.3f v (3v dry, 1v wet).",
 						Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage);
 #endif /* LOGGING */
-			/* The DRD11A is connected to the Ultrasonic Level analogue input.
-			** This should read 3v fully dry, 1v fully wet. */
+			/* The DRD11A analogue output is connected to the Ultrasonic Level analogue input.
+			** The DRD11A analogue output should read 3v fully dry, 1v fully wet. 
+			** The weather station is expecting the digital surface wet value to be as per the
+			** DRD11A DSW, active low corresponds to rain, 2-5v is 'dry'. */
 			if(Wxt536_Data.Analogue_Data.Ultrasonic_Level_Voltage < Digital_Surface_Wet_Drd11a_Threshold)
 			{
 				digital_surface_wet_value->Type = DATA_TYPE_INT;
