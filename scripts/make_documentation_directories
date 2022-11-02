@@ -1,0 +1,13 @@
+#!/bin/csh
+if ( ! $?LT_DOC_HOME ) then
+   setenv LT_DOC_HOME "/home/dev/public_html"
+endif
+setenv WMS_QLI50_WXT536_DOC_HOME	${LT_DOC_HOME}/wms-qli50-wxt536
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}/serial/cdocs/
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}/serial/test/
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}/wxt536/cdocs/
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}/wxt536/test/
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}/qli50/cdocs/
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}/qli50/test/
+mkdir -p ${WMS_QLI50_WXT536_DOC_HOME}/cdocs/

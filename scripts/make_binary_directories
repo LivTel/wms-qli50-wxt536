@@ -1,0 +1,18 @@
+#!/bin/csh
+if ( ! $?LT_SRC_HOME ) then
+   setenv LT_SRC_HOME "/home/dev/src"
+endif
+setenv WMS_QLI50_WXT536_SRC_HOME	${LT_SRC_HOME}/wms-qli50-wxt536
+if ( ! $?LT_BIN_HOME ) then
+   setenv LT_BIN_HOME "/home/dev/bin"
+endif
+setenv WMS_QLI50_WXT536_BIN_HOME	${LT_BIN_HOME}/wms-qli50-wxt536
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/scripts
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/serial/c/${HOSTTYPE}/
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/serial/test/${HOSTTYPE}/
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/wxt536/c/${HOSTTYPE}/
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/wxt536/test/${HOSTTYPE}/
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/qli50/c/${HOSTTYPE}/
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/qli50/test/${HOSTTYPE}/
+mkdir -p ${WMS_QLI50_WXT536_BIN_HOME}/c/${HOSTTYPE}/
